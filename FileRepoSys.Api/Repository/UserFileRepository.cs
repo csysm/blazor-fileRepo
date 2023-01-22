@@ -49,9 +49,12 @@ namespace FileRepoSys.Api.Repository
             return await _dbContext.UserFiles.Where(lambda).ToListAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<UserFile>> GetFilesByPage(Expression<Func<UserFile, bool>> lambda, CancellationToken cancellationToken,int pageSize,int pageIndex)
+        public async Task<IEnumerable<UserFile>> GetFilesByPage(Expression<Func<UserFile, bool>> lambda, CancellationToken cancellationToken,int pageSize,int pageIndex,bool desc=true)
         {
-            return await _dbContext.UserFiles.Where(lambda).Skip(pageSize*(pageIndex-1)).Take(pageSize).ToListAsync(cancellationToken);
+            if(desc)
+                return await _dbContext.UserFiles.Where(lambda).Skip(pageSize * (pageIndex - 1)).Take(pageSize).OrderByDescending(file => file.CreateTime).ToListAsync(cancellationToken);
+            else
+                return await _dbContext.UserFiles.Where(lambda).Skip(pageSize*(pageIndex-1)).Take(pageSize).ToListAsync(cancellationToken);
         }
     }
 }

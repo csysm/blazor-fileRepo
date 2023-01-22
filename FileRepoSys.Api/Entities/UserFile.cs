@@ -13,7 +13,7 @@ namespace FileRepoSys.Api.Entities
 
         [Required]
         [MaxLength(256)]
-        public string FileUrl { get; set; }
+        public string FilePath { get; set; }
 
         [Required]
         [MinLength(1)]

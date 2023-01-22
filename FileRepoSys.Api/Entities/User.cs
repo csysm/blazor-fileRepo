@@ -20,7 +20,11 @@ namespace FileRepoSys.Api.Entities
         [MaxLength(20)]
         public string Password { get; set; }
         
-        public bool Active { get; set; }
+        public bool IsActive { get; set; }
+
+        public double MaxCapacity { get; set; }
+
+        public double CurrentCapacity { get; set; }
 
         public DateTime CreateTime { get; set; }
 

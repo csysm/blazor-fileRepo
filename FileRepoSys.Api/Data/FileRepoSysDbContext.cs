@@ -16,7 +16,9 @@ namespace FileRepoSys.Api.Data
             {
                 Id = Guid.NewGuid(),
                 UserName = "王",
-                Active = true,
+                IsActive = true,
+                MaxCapacity=10,
+                CurrentCapacity=0,
                 CreateTime = DateTime.Now,
                 Password = "123",
                 Email = "593676339@qq.com"

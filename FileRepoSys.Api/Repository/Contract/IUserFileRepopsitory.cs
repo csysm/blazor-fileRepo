@@ -11,6 +11,6 @@ namespace FileRepoSys.Api.Repository.Contract
         Task<int> UpdateOneFile(UserFile file, CancellationToken cancellationToken);
         Task<UserFile> GetOneFile(Guid id, CancellationToken cancellationToken);
         Task<IEnumerable<UserFile>> GetFiles(Expression<Func<UserFile, bool>> lambda, CancellationToken cancellationToken);
-        Task<IEnumerable<UserFile>> GetFilesByPage(Expression<Func<UserFile, bool>> lambda, CancellationToken cancellationToken, int pageSize, int pageIndex);
+        Task<IEnumerable<UserFile>> GetFilesByPage(Expression<Func<UserFile, bool>> lambda, CancellationToken cancellationToken, int pageSize, int pageIndex, bool desc = true);
     }
 }

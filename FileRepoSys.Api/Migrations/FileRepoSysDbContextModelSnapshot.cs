@@ -25,15 +25,21 @@ namespace FileRepoSys.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<bool>("Active")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<DateTime>("CreateTime")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<double>("CurrentCapacity")
+                        .HasColumnType("double");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<double>("MaxCapacity")
+                        .HasColumnType("double");
 
                     b.Property<string>("Password")
                         .IsRequired()
@@ -52,10 +58,12 @@ namespace FileRepoSys.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("456672c0-4232-4480-921a-b63c6a259e79"),
-                            Active = true,
-                            CreateTime = new DateTime(2023, 1, 1, 23, 40, 43, 838, DateTimeKind.Local).AddTicks(2097),
+                            Id = new Guid("71b68f20-39a7-4d1a-97df-00e3c235b976"),
+                            CreateTime = new DateTime(2023, 1, 22, 16, 19, 31, 2, DateTimeKind.Local).AddTicks(1436),
+                            CurrentCapacity = 0.0,
                             Email = "593676339@qq.com",
+                            IsActive = true,
+                            MaxCapacity = 10.0,
                             Password = "123",
                             UserName = "王"
                         });
@@ -75,6 +83,11 @@ namespace FileRepoSys.Api.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("varchar(30)");
 
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
                     b.Property<double>("FileSize")
                         .HasColumnType("double");
 
@@ -82,11 +95,6 @@ namespace FileRepoSys.Api.Migrations
                         .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("varchar(10)");
-
-                    b.Property<string>("FileUrl")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
 
                     b.Property<string>("Hash")
                         .IsRequired()

@@ -23,7 +23,9 @@ namespace FileRepoSys.Api.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Password = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Active = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    IsActive = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    MaxCapacity = table.Column<double>(type: "double", nullable: false),
+                    CurrentCapacity = table.Column<double>(type: "double", nullable: false),
                     CreateTime = table.Column<DateTime>(type: "datetime(6)", nullable: false)
                 },
                 constraints: table =>
@@ -39,7 +41,7 @@ namespace FileRepoSys.Api.Migrations
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     FileName = table.Column<string>(type: "varchar(30)", maxLength: 30, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    FileUrl = table.Column<string>(type: "varchar(256)", maxLength: 256, nullable: false)
+                    FilePath = table.Column<string>(type: "varchar(256)", maxLength: 256, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     FileType = table.Column<string>(type: "varchar(10)", maxLength: 10, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
@@ -65,8 +67,8 @@ namespace FileRepoSys.Api.Migrations
 
             migrationBuilder.InsertData(
                 table: "Users",
-                columns: new[] { "Id", "Active", "CreateTime", "Email", "Password", "UserName" },
-                values: new object[] { new Guid("456672c0-4232-4480-921a-b63c6a259e79"), true, new DateTime(2023, 1, 1, 23, 40, 43, 838, DateTimeKind.Local).AddTicks(2097), "593676339@qq.com", "123", "王" });
+                columns: new[] { "Id", "CreateTime", "CurrentCapacity", "Email", "IsActive", "MaxCapacity", "Password", "UserName" },
+                values: new object[] { new Guid("71b68f20-39a7-4d1a-97df-00e3c235b976"), new DateTime(2023, 1, 22, 16, 19, 31, 2, DateTimeKind.Local).AddTicks(1436), 0.0, "593676339@qq.com", true, 10.0, "123", "王" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserFiles_UserId",
