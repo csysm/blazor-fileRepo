@@ -21,7 +21,8 @@ namespace FileRepoSys.Api.Data
                 CurrentCapacity=0,
                 CreateTime = DateTime.Now,
                 Password = "123",
-                Email = "593676339@qq.com"
+                Email = "593676339@qq.com",
+                IsDeleted = false
             });
                 
         }

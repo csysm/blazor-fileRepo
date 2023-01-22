@@ -28,6 +28,8 @@ namespace FileRepoSys.Api.Entities
 
         public DateTime CreateTime { get; set; }
 
+        public bool IsDeleted { get; set; }
+
         public IEnumerable<UserFile>? UserFiles { get; set; }
     }
 }

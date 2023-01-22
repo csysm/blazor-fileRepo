@@ -14,9 +14,23 @@ namespace FileRepoSys.Api.Repository
             _dbContext = dbContext;
         }
 
+        private Task<UserFile> IsFileExistAsync(string hash)
+        {
+            return _dbContext.UserFiles.FirstOrDefaultAsync(file => file.Hash == hash);
+        }
+
         public async Task<int> AddOneFile(UserFile file, CancellationToken cancellationToken)
         {
-            _dbContext.Entry(file).State = EntityState.Added;
+            var existFile = await IsFileExistAsync(file.Hash);
+            if (existFile != null)
+            {
+                file.FilePath = existFile.FilePath;
+                _dbContext.Entry(file).State = EntityState.Added;
+            }
+            else
+            {
+                _dbContext.Entry(file).State = EntityState.Added;
+            }
             return await _dbContext.SaveChangesAsync();
         }
 
@@ -28,8 +42,9 @@ namespace FileRepoSys.Api.Repository
 
         public async Task<int> DeleteOneFile(Guid id, CancellationToken cancellationToken)
         {
-            UserFile file = new() { Id = id };
-            _dbContext.Entry(file).State = EntityState.Deleted;
+            UserFile file = await GetOneFile(id, cancellationToken);
+            file.IsDeleted = true;
+            _dbContext.Entry(file).State = EntityState.Modified;
             return await _dbContext.SaveChangesAsync();
         }
 

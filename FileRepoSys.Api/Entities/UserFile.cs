@@ -32,6 +32,8 @@ namespace FileRepoSys.Api.Entities
 
         public DateTime CreateTime { get; set; }
 
+        public bool IsDeleted { get; set; }
+
         public Guid UserId { get; set; }
         public User User { get; set; }
     }
