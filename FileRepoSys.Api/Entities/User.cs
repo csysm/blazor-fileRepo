@@ -19,16 +19,16 @@ namespace FileRepoSys.Api.Entities
         [MinLength(6)]
         [MaxLength(20)]
         public string Password { get; set; }
-        
-        public bool IsActive { get; set; }
+
+        public bool IsActive { get; set; } = false;
 
         public double MaxCapacity { get; set; }
 
         public double CurrentCapacity { get; set; }
 
-        public DateTime CreateTime { get; set; }
+        public DateTime CreateTime { get; set; }=DateTime.Now;
 
-        public bool IsDeleted { get; set; }
+        public bool IsDeleted { get; set; } = false;
 
         public IEnumerable<UserFile>? UserFiles { get; set; }
     }

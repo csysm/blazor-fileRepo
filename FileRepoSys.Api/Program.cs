@@ -1,4 +1,7 @@
 using FileRepoSys.Api.Data;
+using FileRepoSys.Api.Repository;
+using FileRepoSys.Api.Repository.Contract;
+using FileRepoSys.Api.Util;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +13,11 @@ builder.Services.AddDbContext<FileRepoSysDbContext>(options =>
     options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
 });
 
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+//×Ô¶¨ÒåAutoMapper
+builder.Services.AddAutoMapper(typeof(CustomeAutoMapperProfile));
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

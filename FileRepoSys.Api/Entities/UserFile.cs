@@ -30,9 +30,9 @@ namespace FileRepoSys.Api.Entities
         [MaxLength(50)]
         public string Profile { get; set; }//简介
 
-        public DateTime CreateTime { get; set; }
+        public DateTime CreateTime { get; set; }=DateTime.Now;
 
-        public bool IsDeleted { get; set; }
+        public bool IsDeleted { get; set; }=false;
 
         public Guid UserId { get; set; }
         public User User { get; set; }
