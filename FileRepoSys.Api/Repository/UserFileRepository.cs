@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 
 namespace FileRepoSys.Api.Repository
 {
-    public class UserFileRepository : IUserFileRepopsitory
+    public class UserFileRepository : IUserFileRepository
     {
         private readonly FileRepoSysDbContext _dbContext;
         public UserFileRepository(FileRepoSysDbContext dbContext)
@@ -31,27 +31,30 @@ namespace FileRepoSys.Api.Repository
             {
                 _dbContext.Entry(file).State = EntityState.Added;
             }
-            return await _dbContext.SaveChangesAsync();
+            return await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<int> AddFiles(IEnumerable<UserFile> files, CancellationToken cancellationToken)
         {
             await _dbContext.UserFiles.AddRangeAsync(files);
-            return await _dbContext.SaveChangesAsync();
+            return await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<int> DeleteOneFile(Guid id, CancellationToken cancellationToken)
         {
-            UserFile file = await GetOneFile(id, cancellationToken);
-            file.IsDeleted = true;
-            _dbContext.Entry(file).State = EntityState.Modified;
-            return await _dbContext.SaveChangesAsync();
+            UserFile file = new()
+            {
+                Id = id,
+                IsDeleted = true,
+            };
+            _dbContext.Entry(file).Property(file=>file.IsDeleted).IsModified=true;
+            return await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<int> UpdateOneFile(UserFile file, CancellationToken cancellationToken)
         {
             _dbContext.Entry(file).State = EntityState.Modified;
-            return await _dbContext.SaveChangesAsync();
+            return await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         public Task<UserFile> GetOneFile(Guid id, CancellationToken cancellationToken)
@@ -59,17 +62,17 @@ namespace FileRepoSys.Api.Repository
             return _dbContext.UserFiles.SingleOrDefaultAsync(file=>file.Id == id,cancellationToken);
         }
 
-        public async Task<IEnumerable<UserFile>> GetFiles(Expression<Func<UserFile, bool>> lambda, CancellationToken cancellationToken)
+        public async Task<List<UserFile>> GetFiles(Expression<Func<UserFile, bool>> lambda, CancellationToken cancellationToken)
         {
             return await _dbContext.UserFiles.Where(lambda).ToListAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<UserFile>> GetFilesByPage(Expression<Func<UserFile, bool>> lambda, CancellationToken cancellationToken,int pageSize,int pageIndex,bool desc=true)
+        public async Task<List<UserFile>> GetFilesByPage(Expression<Func<UserFile, bool>> lambda,int pageSize,int pageIndex, CancellationToken cancellationToken, bool desc=true)
         {
             if(desc)
-                return await _dbContext.UserFiles.Where(lambda).Skip(pageSize * (pageIndex - 1)).Take(pageSize).OrderByDescending(file => file.CreateTime).ToListAsync(cancellationToken);
+                return await _dbContext.UserFiles.Where(lambda).OrderByDescending(file => file.CreateTime).Skip(pageSize * (pageIndex - 1)).Take(pageSize).ToListAsync(cancellationToken);
             else
-                return await _dbContext.UserFiles.Where(lambda).Skip(pageSize*(pageIndex-1)).Take(pageSize).ToListAsync(cancellationToken);
+                return await _dbContext.UserFiles.Where(lambda).OrderBy(file => file.CreateTime).Skip(pageSize*(pageIndex-1)).Take(pageSize).ToListAsync(cancellationToken);
         }
     }
 }

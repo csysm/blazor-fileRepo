@@ -28,8 +28,8 @@ namespace FileRepoSys.Api.Migrations
                     b.Property<DateTime>("CreateTime")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<double>("CurrentCapacity")
-                        .HasColumnType("double");
+                    b.Property<long>("CurrentCapacity")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -41,8 +41,8 @@ namespace FileRepoSys.Api.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<double>("MaxCapacity")
-                        .HasColumnType("double");
+                    b.Property<long>("MaxCapacity")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Password")
                         .IsRequired()
@@ -61,15 +61,15 @@ namespace FileRepoSys.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("61ed26da-017c-4ebe-ac60-03bd2b0e7be1"),
-                            CreateTime = new DateTime(2023, 1, 25, 1, 35, 14, 529, DateTimeKind.Local).AddTicks(7978),
-                            CurrentCapacity = 0.0,
+                            Id = new Guid("46e679a9-7faf-449d-8a87-65eeb3247511"),
+                            CreateTime = new DateTime(2023, 2, 4, 2, 4, 10, 727, DateTimeKind.Local).AddTicks(2384),
+                            CurrentCapacity = 0L,
                             Email = "593676339@qq.com",
                             IsActive = true,
                             IsDeleted = false,
-                            MaxCapacity = 10.0,
+                            MaxCapacity = 10485760L,
                             Password = "123",
-                            UserName = "王"
+                            UserName = "wxx"
                         });
                 });
 
@@ -92,13 +92,13 @@ namespace FileRepoSys.Api.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("varchar(256)");
 
-                    b.Property<double>("FileSize")
-                        .HasColumnType("double");
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("FileType")
                         .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("varchar(10)");
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)");
 
                     b.Property<string>("Hash")
                         .IsRequired()
@@ -108,10 +108,10 @@ namespace FileRepoSys.Api.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<string>("Profile")
+                    b.Property<string>("Suffix")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("char(36)");

@@ -1,13 +1,21 @@
 ﻿@inherits LayoutComponentBase
-
 <div class="page">
     <div class="sidebar">
-        <NavMenu />
+        <AuthorizeView>
+            <Authorized>
+                <NavMenu />
+            </Authorized>
+            <NotAuthorized>
+                <div style="margin: 100px 0; width:100%; text-align: center; color: red;">
+                    <span style="font-size:16px">请重新<a href="/" style="text-decoration:underline">登录</a></span>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
     </div>
 
     <main>
         <div class="top-row px-4">
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
+            <LoginDisplay />
         </div>
 
         <article class="content px-4">
@@ -15,3 +23,4 @@
         </article>
     </main>
 </div>
+

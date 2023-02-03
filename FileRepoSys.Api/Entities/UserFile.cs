@@ -17,18 +17,20 @@ namespace FileRepoSys.Api.Entities
 
         [Required]
         [MinLength(1)]
-        [MaxLength(10)]
+        [MaxLength(128)]
         public string FileType { get; set; }
 
         [Required]
-        public double FileSize { get; set; }
+        [MinLength(1)]
+        [MaxLength(10)]
+        public string Suffix { get; set; }
+
+        [Required]
+        public long FileSize { get; set; }
 
         [Required]
         [MaxLength(256)]
         public string Hash { get; set; }
-
-        [MaxLength(50)]
-        public string Profile { get; set; }//简介
 
         public DateTime CreateTime { get; set; }=DateTime.Now;
 
@@ -36,5 +38,8 @@ namespace FileRepoSys.Api.Entities
 
         public Guid UserId { get; set; }
         public User User { get; set; }
+
+        //[MaxLength(50)]
+        //public string Profile { get; set; }//简介
     }
 }

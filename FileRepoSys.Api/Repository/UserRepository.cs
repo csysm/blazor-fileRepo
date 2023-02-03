@@ -1,6 +1,7 @@
 ﻿using FileRepoSys.Api.Data;
 using FileRepoSys.Api.Entities;
 using FileRepoSys.Api.Repository.Contract;
+using FileRepoSys.Api.Util;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -32,20 +33,25 @@ namespace FileRepoSys.Api.Repository
 
         public async Task<int> DeleteOneUser(Guid id, CancellationToken cancellationToken)
         {
-            User user = await GetOneUser(id, cancellationToken);
-            user.IsDeleted = true;
-            _dbContext.Entry(user).State = EntityState.Modified;
+            User user = new()
+            {
+                Id = id,
+                IsDeleted = true
+            };
+            _dbContext.Entry(user).Property(user=>user.IsDeleted).IsModified=true;
             return await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<int> UpdateUser(User user, CancellationToken cancellationToken)
         {
+            _dbContext.Attach(user);
             _dbContext.Entry(user).State= EntityState.Modified;
             return await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<int> UpdateUserName(User user,CancellationToken cancellationToken)
         {
+            _dbContext.Attach(user);
             _dbContext.Entry(user).Property(user=>user.UserName).IsModified= true;
             return await _dbContext.SaveChangesAsync(cancellationToken);
         }
@@ -57,6 +63,7 @@ namespace FileRepoSys.Api.Repository
             {
                 return 0;
             }
+            _dbContext.Attach(user);
             _dbContext.Entry(user).Property(user => user.Password).IsModified = true;
             return await _dbContext.SaveChangesAsync(cancellationToken);
         }
@@ -79,6 +86,12 @@ namespace FileRepoSys.Api.Repository
             return _dbContext.Users.SingleOrDefaultAsync(user => user.Id == id,cancellationToken);
         }
 
+        public Task<User> GetOneUserByEmail(string email, CancellationToken cancellationToken)
+        {
+            return _dbContext.Users.SingleOrDefaultAsync(user => user.Email == email, cancellationToken);
+        }
+
+
         public async Task<List<User>> GetUsers(Expression<Func<User, bool>> lambda, CancellationToken cancellationToken)
         {
             return await _dbContext.Users.Where(lambda).ToListAsync(cancellationToken);
@@ -87,9 +100,21 @@ namespace FileRepoSys.Api.Repository
         public async Task<List<User>> GetUsersByPage(Expression<Func<User, bool>> lambda, int pageSize, int pageIndex,  CancellationToken cancellationToken,bool desc = true)
         {
             if (desc)
-                return await _dbContext.Users.Where(lambda).Skip(pageSize * (pageIndex - 1)).Take(pageSize).OrderByDescending(user => user.CreateTime).ToListAsync(cancellationToken);
+                return await _dbContext.Users.Where(lambda).OrderByDescending(user => user.CreateTime).Skip(pageSize * (pageIndex - 1)).Take(pageSize).ToListAsync(cancellationToken);
             else
-                return await _dbContext.Users.Where(lambda).Skip(pageSize * (pageIndex - 1)).Take(pageSize).OrderBy(user => user.CreateTime).ToListAsync(cancellationToken);
+                return await _dbContext.Users.Where(lambda).OrderBy(user => user.CreateTime).Skip(pageSize * (pageIndex - 1)).Take(pageSize).ToListAsync(cancellationToken);
+        }
+
+        public async Task<int> UpdateUserCapacity(Guid id, long currentCapacity, CancellationToken cancellationToken)
+        {
+            User user = new()
+            {
+                Id = id,
+                CurrentCapacity= currentCapacity
+            };
+            _dbContext.Attach(user);
+            _dbContext.Entry(user).Property(u => u.CurrentCapacity).IsModified = true;
+            return await _dbContext.SaveChangesAsync();
         }
     }
 }

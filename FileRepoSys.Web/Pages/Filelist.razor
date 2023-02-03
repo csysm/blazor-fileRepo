@@ -1,0 +1,31 @@
+﻿@page "/filelist"
+@attribute [Authorize]
+@inherits FilelistBase
+
+<h1>所有文件</h1>
+
+<table class="table table-hover table-striped">
+    <thead class="thead-dark">
+        <tr>
+            <th>No</th>
+            <th>fileName</th>
+            <th>uploadTime</th>
+            <th>fileType</th>
+            <th>download</th>
+            <th>delete</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var file in userFiles)
+        {
+            <tr>
+                <td>@file.</td>
+                <td>@file.FileName</td>
+                <td>@file.CreateTime</td>
+                <td>@file.FileType</td>
+                <td><button class="btn btn-link" style="border: none" @onclick=@(async()=>await Download_ClickAsync(file.Id.ToString(),$"{file.FileName}.{file.Suffix}"))>download</button></td>
+                <td><button class="btn btn-link" style="border: none"@onclick=@(async()=>await Delete_ClickAsync(file.Id.ToString()))>delete</button></td>
+            </tr>
+        }
+    </tbody>
+</table>

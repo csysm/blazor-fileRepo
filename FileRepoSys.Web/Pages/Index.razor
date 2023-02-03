@@ -1,9 +1,14 @@
-﻿@page "/"
+﻿@page "/index"
+@attribute [Authorize]
+@inherits IndexBase
 
 <PageTitle>Index</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>欢迎: @userDto.UserName</h1>
 
-Welcome to your new app.
+<hr />
+
+<h4>账户容量: @Math.Round((userDto.MaxCapacity / 1_048_576),2) MB</h4>
+<h4>可用容量: @Math.Round(((userDto.MaxCapacity - userDto.CurrentCapacity) / 1_048_576),2) MB</h4>
 
 <SurveyPrompt Title="How is Blazor working for you?" />

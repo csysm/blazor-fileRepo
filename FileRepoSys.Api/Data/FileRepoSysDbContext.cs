@@ -15,16 +15,15 @@ namespace FileRepoSys.Api.Data
             modelBuilder.Entity<User>().HasData(new User
             {
                 Id = Guid.NewGuid(),
-                UserName = "王",
+                UserName = "wxx",
                 IsActive = true,
-                MaxCapacity=10,
-                CurrentCapacity=0,
-                CreateTime = DateTime.Now,
+                MaxCapacity = 10485760,
+                CurrentCapacity = 0,
                 Password = "123",
                 Email = "593676339@qq.com",
-                IsDeleted = false
             });
-                
+            modelBuilder.Entity<User>().HasQueryFilter(user => user.IsDeleted == false);
+            modelBuilder.Entity<UserFile>().HasQueryFilter(userFile => userFile.IsDeleted == false);
         }
 
         public DbSet<User> Users { get; set; }

@@ -12,23 +12,24 @@ namespace FileRepoSys.Api.Controllers
     {
 
         private readonly IUserRepository _userRepository;
-
         private readonly IMapper _mapper;
+
         public UserController(IUserRepository userRepository, IMapper mapper)
         {
             _userRepository = userRepository;
             _mapper = mapper;
         }
 
+        
         [HttpGet]
         [Route("{id}")]
-        public async Task<IActionResult> Get(string id, CancellationToken cancellationToken)
+        public async Task<ActionResult<UserDto>> Get(string id, CancellationToken cancellationToken)
         {
             var user = await _userRepository.GetOneUser(Guid.Parse(id), cancellationToken);
             var userDto = _mapper.Map<User, UserDto>(user);
             return Ok(userDto);
         }
-
+        /*
         [HttpGet]
         [Route("{keyword}/{desc}")]
         public async Task<IActionResult> Get(string keyword, int desc, CancellationToken cancellationToken)
@@ -42,6 +43,7 @@ namespace FileRepoSys.Api.Controllers
             }
             return Ok("no keyword");
         }
+        */
 
         [HttpPost]
         [Route("signup")]

@@ -22,9 +22,9 @@ namespace FileRepoSys.Api.Entities
 
         public bool IsActive { get; set; } = false;
 
-        public double MaxCapacity { get; set; }
+        public long MaxCapacity { get; set; }
 
-        public double CurrentCapacity { get; set; }
+        public long CurrentCapacity { get; set; }
 
         public DateTime CreateTime { get; set; }=DateTime.Now;
 

@@ -6,6 +6,9 @@
         
         public string UserName { get; set; }
 
+
+        public string Email { get; set; }
+
         public double MaxCapacity { get; set; }
 
         public double CurrentCapacity { get; set; }
