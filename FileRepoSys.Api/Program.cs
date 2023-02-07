@@ -37,12 +37,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             {
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("SDMC-CJAS1-SAD-DFSFA-SADHJVF-VF")),//密钥，必须与控制器中的密钥一致
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("SEMC-CJAS1-SAD-DCFDE-SAGRTYM-VF")),//密钥，必须与控制器中的密钥一致
                     ValidateIssuerSigningKey = true,//是否验证key
                     ValidateLifetime = true,//是否验证key是否过期
                     ValidateIssuer = false,//是否验证颁发者(一般为false)
                     ValidateAudience = false,//是否验证受众(一般为false)
-                    ClockSkew = TimeSpan.FromMinutes(1)
+                    ClockSkew = TimeSpan.FromMinutes(5)
                 };
             });
 

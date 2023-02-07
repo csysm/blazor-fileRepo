@@ -5,7 +5,7 @@ namespace FileRepoSys.Api.Repository.Contract
 {
     public interface IUserRepository
     {
-        Task<int> AddOneUser(User user, CancellationToken cancellationToken);
+        Task<string> AddOneUser(User user, CancellationToken cancellationToken);
         Task<int> DeleteOneUser(Guid id, CancellationToken cancellationToken);
         Task<int> UpdateUser(User user, CancellationToken cancellationToken);
         Task<int> ActiveUser(Guid id, CancellationToken cancellationToken);

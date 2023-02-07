@@ -3,7 +3,7 @@ using FileRepoSys.Api.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
-using Newtonsoft.Json;
+using Models.UserFileModels;
 using System.Net.Http.Json;
 using System.Security.Claims;
 
@@ -25,11 +25,13 @@ namespace FileRepoSys.Web.Pages
 
         [Inject] IJSRuntime JS { get; set; }
 
-        public List<UserFileDto> userFiles { get; set; } = new List<UserFileDto>();
         public string? UserId { get; set; }
-        public int PageIndex { get; set; } = 1;
-
-
+        public FilelistDto fileListDto { get; set; } = new FilelistDto()
+        {
+            CurrentPageFiles = new List<UserFileDto>(),
+            TotalCount = 0,
+        };
+        public int CurrentPageIndex { get; set; } = 1;
 
         public async Task Download_ClickAsync(string fileId, string fileName)
         {
@@ -51,6 +53,7 @@ namespace FileRepoSys.Web.Pages
             using var response = await _httpClient.DeleteAsync($"files/delete/{fileId}");
             if (response.IsSuccessStatusCode)
             {
+                await LoadData(UserId,CurrentPageIndex);
                 await _messageService.Success("删除成功");
             }
             else
@@ -59,11 +62,15 @@ namespace FileRepoSys.Web.Pages
             }
         }
 
+        public async Task OnPageChange(PaginationEventArgs args)
+        {
+            await LoadData(UserId, args.Page);
+            CurrentPageIndex = args.Page;
+        }
+
         protected override async Task OnInitializedAsync()
         {
-
             var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-
             if (authState.User.Identity.IsAuthenticated)
             {
                 if (DateTime.Now <= DateTime.Parse(authState.User.Claims.First(c => c.Type == "expire").Value))
@@ -71,11 +78,10 @@ namespace FileRepoSys.Web.Pages
                     try
                     {
                         UserId = authState.User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
-                        userFiles = await _httpClient.GetFromJsonAsync<List<UserFileDto>>($"files?userId={UserId}&pageIndex={PageIndex}");
+                        await LoadData(UserId,CurrentPageIndex);
                     }
                     catch (Exception)
                     {
-
                         await _messageService.Error("请求错误,请稍后再试");
                     }
                 }
@@ -87,6 +93,11 @@ namespace FileRepoSys.Web.Pages
             }
 
             await base.OnInitializedAsync();
+        }
+
+        public async Task LoadData(string userId,int currentPageIndex)
+        {
+            fileListDto= await _httpClient.GetFromJsonAsync<FilelistDto>($"files?userId={userId}&pageIndex={currentPageIndex}");
         }
     }
 }

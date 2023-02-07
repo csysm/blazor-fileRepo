@@ -1,13 +1,33 @@
 ﻿@page "/filelist"
+@using FileRepoSys.Api.Models
+@using System.ComponentModel
+@using AntDesign.TableModels
 @attribute [Authorize]
 @inherits FilelistBase
 
 <h1>所有文件</h1>
+@*<Table TItem="UserFileDto" DataSource="@fileListDto.CurrentPageFiles" OnRowClick="OnRowClick">
+  <PropertyColumn Property="c=>c.FileName"><a>@context.FileName</a></PropertyColumn>
+  <PropertyColumn Property="c=>c.CreateTime"></PropertyColumn>
+  <PropertyColumn Property="c=>c.Suffix"></PropertyColumn>
+  <PropertyColumn Property="c=>c.FileSize"></PropertyColumn>
+  <ActionColumn Title="Action">
+    <Space Size=@("middle")>
+      <SpaceItem>
+        <a class="btn btn-link" style="border: none" @onclick=@(async()=>await Download_ClickAsync(context.Id.ToString(),$"{context.FileName}.{context.Suffix}"))>download</a>
+      </SpaceItem>
+      <SpaceItem>
+        <a class="btn btn-link" style="border: none"@onclick=@(async()=>await Delete_ClickAsync(context.Id.ToString()))>delete</a>
+      </SpaceItem>
+    </Space>
+  </ActionColumn>
+</Table>*@
+
 
 <table class="table table-hover table-striped">
     <thead class="thead-dark">
         <tr>
-            <th>No</th>
+            <th>Size</th>
             <th>fileName</th>
             <th>uploadTime</th>
             <th>fileType</th>
@@ -16,16 +36,28 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var file in userFiles)
+        @foreach (var file in fileListDto.CurrentPageFiles)
         {
             <tr>
-                <td>@file.</td>
+                <td>@Math.Round((file.FileSize/1_048_576),2)MB</td>
                 <td>@file.FileName</td>
                 <td>@file.CreateTime</td>
-                <td>@file.FileType</td>
-                <td><button class="btn btn-link" style="border: none" @onclick=@(async()=>await Download_ClickAsync(file.Id.ToString(),$"{file.FileName}.{file.Suffix}"))>download</button></td>
-                <td><button class="btn btn-link" style="border: none"@onclick=@(async()=>await Delete_ClickAsync(file.Id.ToString()))>delete</button></td>
+                <td>@file.Suffix</td>
+                <td><a class="link-info" @onclick=@(async()=>await Download_ClickAsync(file.Id.ToString(),$"{file.FileName}.{file.Suffix}"))>download</a></td>
+                <td><a class="link-danger" @onclick=@(async()=>await Delete_ClickAsync(file.Id.ToString()))>delete</a></td>
             </tr>
         }
     </tbody>
+    
 </table>
+
+<footer style="text-align: center;">
+    <Pagination Current="@CurrentPageIndex" OnChange="OnPageChange" PageSize="15" DefaultPageSize="15" Total="@fileListDto.TotalCount" />
+    Page: @CurrentPageIndex
+</footer>
+  
+
+
+
+
+

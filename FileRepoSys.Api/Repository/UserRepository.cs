@@ -21,14 +21,15 @@ namespace FileRepoSys.Api.Repository
             return _dbContext.Users.AnyAsync(user => user.Email == email);
         }
 
-        public async Task<int> AddOneUser(User user,CancellationToken cancellationToken)
+        public async Task<string> AddOneUser(User user,CancellationToken cancellationToken)
         {
             if(await IsUserExistAsync(user.Email))
             {
-                return 0;
+                return "";
             }
-            _dbContext.Entry(user).State = EntityState.Added;
-            return await _dbContext.SaveChangesAsync(cancellationToken);
+            await _dbContext.AddAsync(user);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return user.Id.ToString();
         }
 
         public async Task<int> DeleteOneUser(Guid id, CancellationToken cancellationToken)
@@ -70,14 +71,24 @@ namespace FileRepoSys.Api.Repository
 
         public async Task<int> ActiveUser(Guid id, CancellationToken cancellationToken)
         {
-            var user = await _dbContext.Users.SingleOrDefaultAsync(user => user.Id == id);
-            if(user == null||user.IsDeleted==true)
+            var user = await _dbContext.Users.IgnoreQueryFilters().SingleOrDefaultAsync(user => user.Id == id);
+            if(user == null)
             {
-                return 0;
+                return 1;
             }
+            if(user.IsDeleted == true)
+            {
+                return 2;
+            }
+            if(user.IsActive == true)
+            {
+                return 3;
+            }
+
             user.IsActive = true;
             _dbContext.Entry(user).Property(user => user.IsActive).IsModified = true;
-            return await _dbContext.SaveChangesAsync(cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return 0;
         }
         
 

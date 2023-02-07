@@ -8,8 +8,13 @@ namespace FileRepoSys.Api.Entities
 
         [Required]
         [MinLength(1)]
-        [MaxLength(30)]
+        [MaxLength(64)]
         public string FileName { get; set; }
+
+        [Required]
+        [MinLength(1)]
+        [MaxLength(64)]
+        public string FileStorageName { get; set; }
 
         [Required]
         [MaxLength(256)]
@@ -18,7 +23,7 @@ namespace FileRepoSys.Api.Entities
         [Required]
         [MinLength(1)]
         [MaxLength(128)]
-        public string FileType { get; set; }
+        public string MimeType { get; set; }
 
         [Required]
         [MinLength(1)]
@@ -27,10 +32,6 @@ namespace FileRepoSys.Api.Entities
 
         [Required]
         public long FileSize { get; set; }
-
-        [Required]
-        [MaxLength(256)]
-        public string Hash { get; set; }
 
         public DateTime CreateTime { get; set; }=DateTime.Now;
 
