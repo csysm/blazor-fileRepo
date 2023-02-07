@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FileRepoSys.Api.Migrations
 {
     [DbContext(typeof(FileRepoSysDbContext))]
-    [Migration("20230203180410_init")]
+    [Migration("20230206163511_init")]
     partial class init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -63,8 +63,8 @@ namespace FileRepoSys.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("46e679a9-7faf-449d-8a87-65eeb3247511"),
-                            CreateTime = new DateTime(2023, 2, 4, 2, 4, 10, 727, DateTimeKind.Local).AddTicks(2384),
+                            Id = new Guid("302dde56-978c-4bf8-88a5-081fb862b8b5"),
+                            CreateTime = new DateTime(2023, 2, 7, 0, 35, 10, 897, DateTimeKind.Local).AddTicks(1247),
                             CurrentCapacity = 0L,
                             Email = "593676339@qq.com",
                             IsActive = true,
@@ -86,8 +86,8 @@ namespace FileRepoSys.Api.Migrations
 
                     b.Property<string>("FileName")
                         .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("varchar(30)");
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
 
                     b.Property<string>("FilePath")
                         .IsRequired()
@@ -97,18 +97,18 @@ namespace FileRepoSys.Api.Migrations
                     b.Property<long>("FileSize")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("FileType")
+                    b.Property<string>("FileStorageName")
                         .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
-
-                    b.Property<string>("Hash")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("MimeType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)");
 
                     b.Property<string>("Suffix")
                         .IsRequired()

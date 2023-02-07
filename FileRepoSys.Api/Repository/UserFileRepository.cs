@@ -14,23 +14,9 @@ namespace FileRepoSys.Api.Repository
             _dbContext = dbContext;
         }
 
-        private Task<UserFile> IsFileExistAsync(string hash)
-        {
-            return _dbContext.UserFiles.FirstOrDefaultAsync(file => file.Hash == hash);
-        }
-
         public async Task<int> AddOneFile(UserFile file, CancellationToken cancellationToken)
         {
-            var existFile = await IsFileExistAsync(file.Hash);
-            if (existFile != null)
-            {
-                file.FilePath = existFile.FilePath;
-                _dbContext.Entry(file).State = EntityState.Added;
-            }
-            else
-            {
-                _dbContext.Entry(file).State = EntityState.Added;
-            }
+            _dbContext.Entry(file).State = EntityState.Added;
             return await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
@@ -73,6 +59,11 @@ namespace FileRepoSys.Api.Repository
                 return await _dbContext.UserFiles.Where(lambda).OrderByDescending(file => file.CreateTime).Skip(pageSize * (pageIndex - 1)).Take(pageSize).ToListAsync(cancellationToken);
             else
                 return await _dbContext.UserFiles.Where(lambda).OrderBy(file => file.CreateTime).Skip(pageSize*(pageIndex-1)).Take(pageSize).ToListAsync(cancellationToken);
+        }
+
+        public Task<int> GetFilesCount(Guid id)
+        {
+            return _dbContext.UserFiles.CountAsync(file=>file.UserId == id);
         }
     }
 }

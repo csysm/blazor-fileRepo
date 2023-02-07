@@ -1,0 +1,40 @@
+﻿@page "/upload"
+@inherits FileUploadBase
+@attribute [Authorize]
+<h1>Upload Files</h1>
+
+<p>
+    <label>
+        Upload up to @maxAllowedFiles files:
+        <InputFile OnChange="@OnInputFileChange" multiple />
+    </label>
+</p>
+
+@if (files.Count > 0)
+{
+    <div class="card">
+        <div class="card-body">
+            <ul>
+                @foreach (var file in files)
+                {
+                    <li>
+                        File: @file.Name
+                        <br>
+                        @if (FileUpload(uploadResults, file.Name, Logger,out var result))
+                        {
+                            <span>
+                                上传成功
+                            </span>
+                        }
+                        else
+                        {
+                            <span>
+                                上传时发生错误
+                            </span>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+}

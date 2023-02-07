@@ -40,17 +40,17 @@ namespace FileRepoSys.Api.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    FileName = table.Column<string>(type: "varchar(30)", maxLength: 30, nullable: false)
+                    FileName = table.Column<string>(type: "varchar(64)", maxLength: 64, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    FileStorageName = table.Column<string>(type: "varchar(64)", maxLength: 64, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     FilePath = table.Column<string>(type: "varchar(256)", maxLength: 256, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    FileType = table.Column<string>(type: "varchar(128)", maxLength: 128, nullable: false)
+                    MimeType = table.Column<string>(type: "varchar(128)", maxLength: 128, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Suffix = table.Column<string>(type: "varchar(10)", maxLength: 10, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     FileSize = table.Column<long>(type: "bigint", nullable: false),
-                    Hash = table.Column<string>(type: "varchar(256)", maxLength: 256, nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
                     CreateTime = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     UserId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci")
@@ -70,7 +70,7 @@ namespace FileRepoSys.Api.Migrations
             migrationBuilder.InsertData(
                 table: "Users",
                 columns: new[] { "Id", "CreateTime", "CurrentCapacity", "Email", "IsActive", "IsDeleted", "MaxCapacity", "Password", "UserName" },
-                values: new object[] { new Guid("46e679a9-7faf-449d-8a87-65eeb3247511"), new DateTime(2023, 2, 4, 2, 4, 10, 727, DateTimeKind.Local).AddTicks(2384), 0L, "593676339@qq.com", true, false, 10485760L, "123", "wxx" });
+                values: new object[] { new Guid("302dde56-978c-4bf8-88a5-081fb862b8b5"), new DateTime(2023, 2, 7, 0, 35, 10, 897, DateTimeKind.Local).AddTicks(1247), 0L, "593676339@qq.com", true, false, 10485760L, "123", "wxx" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserFiles_UserId",

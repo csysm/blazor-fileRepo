@@ -12,8 +12,6 @@
 
         public double FileSize { get; set; }
 
-        public string Profile { get; set; }//简介
-
         public DateTime CreateTime { get; set; } = DateTime.Now;
     }
 }
