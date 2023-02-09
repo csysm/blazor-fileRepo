@@ -123,7 +123,7 @@ namespace FileRepoSys.Api.Repository
                 Id = id,
                 CurrentCapacity= currentCapacity
             };
-            _dbContext.Attach(user);
+            //_dbContext.Attach(user);
             _dbContext.Entry(user).Property(u => u.CurrentCapacity).IsModified = true;
             return await _dbContext.SaveChangesAsync();
         }

@@ -16,7 +16,7 @@ namespace FileRepoSys.Api.Repository
 
         public async Task<int> AddOneFile(UserFile file, CancellationToken cancellationToken)
         {
-            _dbContext.Entry(file).State = EntityState.Added;
+            await _dbContext.AddAsync(file, cancellationToken);
             return await _dbContext.SaveChangesAsync(cancellationToken);
         }
 

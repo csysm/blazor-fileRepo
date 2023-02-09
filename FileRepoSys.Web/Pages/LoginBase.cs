@@ -26,10 +26,10 @@ namespace FileRepoSys.Web.Pages
             var result= await _authenticationService.Login(new UserLoginViewModel { Email = userLoginViewModel.Email, Password = userLoginViewModel.Password });
             if (!result)
             {
-                await _messageService.Error("wrong email or password!");
+                await _messageService.Error("用户名或密码错误");
                 return;
             }
-            await _messageService.Success("login success!");
+            await _messageService.Success("登录成功");
             _navigationManager.NavigateTo("/index");
         }
 
@@ -41,7 +41,7 @@ namespace FileRepoSys.Web.Pages
             {
                 if(DateTime.Now<=DateTime.Parse(authState.User.Claims.First(c => c.Type == "expire").Value))
                 {
-                    await _messageService.Success("already login");
+                    await _messageService.Success("您已登录");
                     _navigationManager.NavigateTo("/index");
                 }
                 else

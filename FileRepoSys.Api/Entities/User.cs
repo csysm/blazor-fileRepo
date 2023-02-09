@@ -16,8 +16,8 @@ namespace FileRepoSys.Api.Entities
         public string Email { get; set; }
 
         [Required]
-        [MinLength(6)]
-        [MaxLength(20)]
+        [MinLength(16)]
+        [MaxLength(64)]
         public string Password { get; set; }
 
         public bool IsActive { get; set; } = false;

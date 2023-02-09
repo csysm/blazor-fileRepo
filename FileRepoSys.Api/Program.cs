@@ -1,13 +1,9 @@
 using FileRepoSys.Api.Data;
-using FileRepoSys.Api.Repository;
-using FileRepoSys.Api.Repository.Contract;
-using FileRepoSys.Api.Service;
-using FileRepoSys.Api.Service.Contract;
+using FileRepoSys.Api.ServiceExtension;
 using FileRepoSys.Api.Util;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
 using System.Text;
 
@@ -20,10 +16,8 @@ builder.Services.AddDbContext<FileRepoSysDbContext>(options =>
     options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
 });
 
-//自定义服务注入
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IUserFileRepository, UserFileRepository>();
-builder.Services.AddScoped<IFileService, FileService>();
+//注册自定义服务注入
+builder.Services.AddExtendServices();
 
 
 //自定义AutoMapper

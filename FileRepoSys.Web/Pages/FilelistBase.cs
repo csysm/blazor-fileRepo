@@ -48,12 +48,13 @@ namespace FileRepoSys.Web.Pages
             }
         }
 
+
         public async Task Delete_ClickAsync(string fileId)
         {
             using var response = await _httpClient.DeleteAsync($"files/delete/{fileId}");
             if (response.IsSuccessStatusCode)
             {
-                await LoadData(UserId,CurrentPageIndex);
+                await LoadData(UserId, CurrentPageIndex);
                 await _messageService.Success("删除成功");
             }
             else
