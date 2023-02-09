@@ -21,7 +21,7 @@ namespace FileRepoSys.Api.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Email = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Password = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: false)
+                    Password = table.Column<string>(type: "varchar(64)", maxLength: 64, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     IsActive = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     MaxCapacity = table.Column<long>(type: "bigint", nullable: false),
@@ -70,7 +70,7 @@ namespace FileRepoSys.Api.Migrations
             migrationBuilder.InsertData(
                 table: "Users",
                 columns: new[] { "Id", "CreateTime", "CurrentCapacity", "Email", "IsActive", "IsDeleted", "MaxCapacity", "Password", "UserName" },
-                values: new object[] { new Guid("302dde56-978c-4bf8-88a5-081fb862b8b5"), new DateTime(2023, 2, 7, 0, 35, 10, 897, DateTimeKind.Local).AddTicks(1247), 0L, "593676339@qq.com", true, false, 10485760L, "123", "wxx" });
+                values: new object[] { new Guid("07dc2516-590c-46d9-adf4-d1c89b67b991"), new DateTime(2023, 2, 9, 23, 10, 38, 633, DateTimeKind.Local).AddTicks(408), 0L, "593676339@qq.com", true, false, 10485760L, "123", "wxx" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserFiles_UserId",

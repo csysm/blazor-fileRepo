@@ -2,6 +2,8 @@
 using FileRepoSys.Api.Models.AuthenticationModels;
 using FileRepoSys.Api.Models.UserModels;
 using FileRepoSys.Api.Repository.Contract;
+using FileRepoSys.Api.Service.Contract;
+using FileRepoSys.Api.Util;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -14,13 +16,14 @@ namespace FileRepoSys.Api.Controllers
     [Route("authentication")]
     public class AuthenticationController : ControllerBase
     {
-
-        private readonly IUserRepository _userRepository;
         //private readonly IMemoryCache _memoryCache;
 
-        public AuthenticationController(IUserRepository userRepository)
+        private readonly IUserRepository _userRepository;
+        private readonly IHashHelper _md5helper;
+        public AuthenticationController(IUserRepository userRepository, IHashHelper md5helper)
         {
             _userRepository = userRepository;
+            _md5helper = md5helper;
         }
 
         private string CreateJWT(User user)
@@ -52,7 +55,7 @@ namespace FileRepoSys.Api.Controllers
         {
             var user = await _userRepository.GetOneUserByEmail(viewModel.Email, cancellationToken);
             
-            if (user == null || user.Password != viewModel.Password)
+            if (user == null || _md5helper.MD5Encrypt32(viewModel.Password) != user.Password)
             {
                 return Unauthorized();
             }
@@ -67,12 +70,12 @@ namespace FileRepoSys.Api.Controllers
 
         [HttpPost]
         [Route("signup")]
-        public async Task<IActionResult> Signup([FromBody] UserAddViewModel viewModel, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Signup([FromBody] UserAddViewModel viewModel,CancellationToken cancellationToken = default)
         {
             User newUser = new()
             {
                 Email = viewModel.Email,
-                Password = viewModel.Password,
+                Password = _md5helper.MD5Encrypt32(viewModel.Password),
                 UserName = viewModel.UserName,
                 MaxCapacity = 1024*1024*10,
                 CurrentCapacity = 0
@@ -84,8 +87,17 @@ namespace FileRepoSys.Api.Controllers
             {
                 return BadRequest("用户已经存在");
             }
+            try
+            {
+                Mailhelper.SendMail(viewModel.Email, viewModel.UserName, "http://localhost:5103/authentication/active?id=" + userId);
+                return Ok("我们已经发送了一封激活邮件到您的邮箱，请查收");
+            }
+            catch (Exception)
+            {
 
-            return Ok(userId);
+                return BadRequest("注册失败");
+            }
+            
         }
 
         [HttpGet]
@@ -103,14 +115,15 @@ namespace FileRepoSys.Api.Controllers
                 {
                     return BadRequest("激活失败，不存在该用户");
                 }
-                else if (result == 3)
-                {
-                    return BadRequest("该用户已激活");
-                }
-                else
+                else if (result == 2)
                 {
                     return BadRequest("该邮箱已被注册");
                 }
+                else
+                {
+                    return BadRequest("该用户已激活");
+                }
+                
             }
             else
             {

@@ -217,7 +217,7 @@ namespace FileRepoSys.Api.Controllers
 
         [HttpGet]
         [Route("download/{fileId}")]
-        public async Task<ActionResult<FileStreamResult>> Get([FromServices] IFileService fileService, string fileId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Get([FromServices] IFileService fileService, string fileId, CancellationToken cancellationToken = default)
         {
             try
             {

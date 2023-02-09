@@ -46,8 +46,8 @@ namespace FileRepoSys.Api.Migrations
 
                     b.Property<string>("Password")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("varchar(20)");
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
 
                     b.Property<string>("UserName")
                         .IsRequired()
@@ -61,8 +61,8 @@ namespace FileRepoSys.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("302dde56-978c-4bf8-88a5-081fb862b8b5"),
-                            CreateTime = new DateTime(2023, 2, 7, 0, 35, 10, 897, DateTimeKind.Local).AddTicks(1247),
+                            Id = new Guid("07dc2516-590c-46d9-adf4-d1c89b67b991"),
+                            CreateTime = new DateTime(2023, 2, 9, 23, 10, 38, 633, DateTimeKind.Local).AddTicks(408),
                             CurrentCapacity = 0L,
                             Email = "593676339@qq.com",
                             IsActive = true,

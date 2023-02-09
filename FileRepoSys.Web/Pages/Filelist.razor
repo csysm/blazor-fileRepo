@@ -6,56 +6,60 @@
 @inherits FilelistBase
 
 <h1>所有文件</h1>
-@*<Table TItem="UserFileDto" DataSource="@fileListDto.CurrentPageFiles" OnRowClick="OnRowClick">
-  <PropertyColumn Property="c=>c.FileName"><a>@context.FileName</a></PropertyColumn>
-  <PropertyColumn Property="c=>c.CreateTime"></PropertyColumn>
-  <PropertyColumn Property="c=>c.Suffix"></PropertyColumn>
-  <PropertyColumn Property="c=>c.FileSize"></PropertyColumn>
-  <ActionColumn Title="Action">
-    <Space Size=@("middle")>
-      <SpaceItem>
-        <a class="btn btn-link" style="border: none" @onclick=@(async()=>await Download_ClickAsync(context.Id.ToString(),$"{context.FileName}.{context.Suffix}"))>download</a>
-      </SpaceItem>
-      <SpaceItem>
-        <a class="btn btn-link" style="border: none"@onclick=@(async()=>await Delete_ClickAsync(context.Id.ToString()))>delete</a>
-      </SpaceItem>
-    </Space>
-  </ActionColumn>
-</Table>*@
-
-
-<table class="table table-hover table-striped">
-    <thead class="thead-dark">
-        <tr>
-            <th>Size</th>
-            <th>fileName</th>
-            <th>uploadTime</th>
-            <th>fileType</th>
-            <th>download</th>
-            <th>delete</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var file in fileListDto.CurrentPageFiles)
-        {
+<Divider />
+@if (fileListDto.CurrentPageFiles.Count == 0)
+{
+    <Empty />
+}
+else
+{
+    <table class="table table-hover table-striped">
+        <thead class="thead-dark">
             <tr>
-                <td>@Math.Round((file.FileSize/1_048_576),2)MB</td>
-                <td>@file.FileName</td>
-                <td>@file.CreateTime</td>
-                <td>@file.Suffix</td>
-                <td><a class="link-info" @onclick=@(async()=>await Download_ClickAsync(file.Id.ToString(),$"{file.FileName}.{file.Suffix}"))>download</a></td>
-                <td><a class="link-danger" @onclick=@(async()=>await Delete_ClickAsync(file.Id.ToString()))>delete</a></td>
+                <th>Size</th>
+                <th>fileName</th>
+                <th>uploadTime</th>
+                <th>fileType</th>
+                <th>download</th>
+                <th>delete</th>
             </tr>
-        }
-    </tbody>
-    
-</table>
+        </thead>
+        <tbody>
+            @foreach (var file in fileListDto.CurrentPageFiles)
+            {
+                <tr>
+                    <td>@Math.Round((file.FileSize/1_048_576),2)MB</td>
+                    <td>@file.FileName</td>
+                    <td>@file.CreateTime</td>
+                    <td>@file.Suffix</td>
+                    <td>
+                        <a class="link-info" @onclick=@(async()=>await Download_ClickAsync(file.Id.ToString(),$"{file.FileName}.{file.Suffix}"))>download</a>
+                    </td>
+                    <td>
+                        <Popconfirm Title="确定要删除吗?"
+                            OnConfirm="async ()=>await Delete_ClickAsync(file.Id.ToString())"
+                            OkText="Ok"
+                            CancelText="No">
+                            <a class="link-danger">delete</a>
+                        </Popconfirm>
+                    </td>
+                </tr>
+            }
+        </tbody>
 
-<footer style="text-align: center;">
-    <Pagination Current="@CurrentPageIndex" OnChange="OnPageChange" PageSize="15" DefaultPageSize="15" Total="@fileListDto.TotalCount" />
-    Page: @CurrentPageIndex
-</footer>
-  
+    </table>
+
+    <footer style="text-align: center;">
+        <Pagination Current="@CurrentPageIndex" OnChange="OnPageChange" PageSize="15" DefaultPageSize="15" Total="@fileListDto.TotalCount" />
+        Page: @CurrentPageIndex
+    </footer>
+}
+
+
+
+
+
+
 
 
 

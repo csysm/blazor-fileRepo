@@ -10,7 +10,7 @@ namespace FileRepoSys.Api.Models.UserModels
         public string UserName { get; set; }
 
         [Required]
-        //[EmailAddress]
+        [EmailAddress]
         public string Email { get; set; }
 
         [Required]

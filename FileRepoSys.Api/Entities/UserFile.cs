@@ -39,8 +39,5 @@ namespace FileRepoSys.Api.Entities
 
         public Guid UserId { get; set; }
         public User User { get; set; }
-
-        //[MaxLength(50)]
-        //public string Profile { get; set; }//简介
     }
 }
