@@ -77,7 +77,7 @@ namespace FileRepoSys.Api.Controllers
                 Email = viewModel.Email,
                 Password = _md5helper.MD5Encrypt32(viewModel.Password),
                 UserName = viewModel.UserName,
-                MaxCapacity = 1024*1024*10,
+                MaxCapacity = 1024*1024*100,
                 CurrentCapacity = 0
             };
 
@@ -89,7 +89,7 @@ namespace FileRepoSys.Api.Controllers
             }
             try
             {
-                Mailhelper.SendMail(viewModel.Email, viewModel.UserName, "http://localhost:5103/authentication/active?id=" + userId);
+                Mailhelper.SendMail(viewModel.Email, viewModel.UserName, "http://localhost:5113/sign-result/" + userId);
                 return Ok("我们已经发送了一封激活邮件到您的邮箱，请查收");
             }
             catch (Exception)

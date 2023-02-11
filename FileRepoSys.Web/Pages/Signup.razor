@@ -1,16 +1,23 @@
-﻿@page "/"
+﻿@page "/signup"
+@inherits SignupBase
 @layout LoginLayout
-@inherits LoginBase
 
-<AntDesign.Form Model="@userLoginViewModel" Style="height:100%"
-                OnFinish="Login_Click"
-                LabelColSpan="4" 
+<AntDesign.Form Model="@userAddViewModel" Style="height:100%"
+                OnFinish="Signup_Click"
+                LabelColSpan="4"
                 LabelColOffset="6"
                 WrapperColSpan="4">
     <FormItem WrapperColOffset="0" WrapperColSpan="4">
-        <AntDesign.Input Placeholder="请输入邮箱" AllowClear="true" @bind-Value="@context.Email">
+        <AntDesign.Input Placeholder="请输入用户名" AllowClear="true" @bind-Value="@context.UserName">
             <Prefix>
                 <Icon Type="user"></Icon>
+            </Prefix>
+        </AntDesign.Input>
+    </FormItem>
+    <FormItem WrapperColOffset="0" WrapperColSpan="4">
+        <AntDesign.Input Placeholder="请输入邮箱" AllowClear="true" @bind-Value="@context.Email">
+            <Prefix>
+                <Icon Type="mail"></Icon>
             </Prefix>
         </AntDesign.Input>
     </FormItem>
@@ -23,13 +30,7 @@
     </FormItem>
     <FormItem WrapperColOffset="11" WrapperColSpan="2">
         <Button Type="@ButtonType.Primary" HtmlType="submit" Block>
-            登录
-        </Button>
-    </FormItem>
-    <FormItem WrapperColOffset="11" WrapperColSpan="2">
-        <Button Type="@ButtonType.Link" HtmlType="submit" Block OnClick=GoSignup>
             注册
         </Button>
     </FormItem>
 </AntDesign.Form>
-
