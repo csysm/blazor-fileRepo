@@ -3,7 +3,6 @@ using Blazored.LocalStorage;
 using FileRepoSys.Api.Models.UserModels;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using Newtonsoft.Json;
 using System.Net.Http.Json;
 using System.Security.Claims;
 

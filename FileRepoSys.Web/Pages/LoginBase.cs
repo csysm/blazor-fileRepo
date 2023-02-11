@@ -53,5 +53,10 @@ namespace FileRepoSys.Web.Pages
 
             await base.OnInitializedAsync();
         }
+
+        public void GoSignup()
+        {
+            _navigationManager.NavigateTo("/signup");
+        }
     }
 }

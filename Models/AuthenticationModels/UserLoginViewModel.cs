@@ -6,7 +6,7 @@ namespace FileRepoSys.Api.Models.AuthenticationModels
     {
         [Required]
         [Display(Name ="邮箱")]
-        [StringLength(20, MinimumLength =3)]
+        [EmailAddress]
         public string Email { get; set;}
 
         [Required]
