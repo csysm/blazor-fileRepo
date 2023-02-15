@@ -6,13 +6,14 @@ using FileRepoSys.Api.Service.Contract;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using System.IO;
 using Models.UserFileModels;
 using System.Net;
+using Microsoft.Extensions.Caching.Distributed;
+using Newtonsoft.Json;
 
 namespace FileRepoSys.Api.Controllers
 {
-    [Route("files")]
+    [Route("api/files")]
     [ApiController]
     [Authorize]
     public class UserFilesController : ControllerBase
@@ -34,32 +35,58 @@ namespace FileRepoSys.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<FilelistDto>> Get(string userId, int pageIndex, CancellationToken cancellationToken)
         {
-            FilelistDto fileListDto = new();
-            var userFiles = await _userFileRepopsitory.GetFilesByPage(file => file.UserId == Guid.Parse(userId), 15, pageIndex, cancellationToken);
+            Guid userIdGuid = Guid.Empty;
+            if (!Guid.TryParse(userId,out userIdGuid))
+            {
+                return BadRequest("不存在的id");
+            }
 
-            int count =await _userFileRepopsitory.GetFilesCount(Guid.Parse(userId));
-            var userFileDtos=_mapper.Map<List<UserFile>,List<UserFileDto>>(userFiles);
+            try
+            {
+                var userFiles = await _userFileRepopsitory.GetFilesByPage(file => file.UserId == Guid.Parse(userId), 15, pageIndex, cancellationToken);
+                int count = await _userFileRepopsitory.GetFilesCount(Guid.Parse(userId));
+                var userFileDtos = _mapper.Map<List<UserFile>, List<UserFileDto>>(userFiles);
 
-            fileListDto.CurrentPageFiles = userFileDtos;
-            fileListDto.TotalCount = count;
+                FilelistDto fileListDto = new();
+                fileListDto.CurrentPageFiles = userFileDtos;
+                fileListDto.TotalCount = count;
 
-            return Ok(fileListDto);
+                return Ok(fileListDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation(ex.Message);
+                return BadRequest("something wrong");
+            }
         }
 
         [HttpGet]
         [Route("search")]
         public async Task<IActionResult> Get(string userId, string keyword, int pageIndex, CancellationToken cancellationToken)
         {
-            var userFiles = await _userFileRepopsitory.GetFilesByPage(file => file.UserId == Guid.Parse(userId) && file.FileName.Contains(keyword), 15, pageIndex, cancellationToken);
+            Guid userIdGuid = Guid.Empty;
+            if (!Guid.TryParse(userId, out userIdGuid))
+            {
+                return BadRequest("不存在的id");
+            }
 
+            try
+            {
+                var userFiles = await _userFileRepopsitory.GetFilesByPage(file => file.UserId == Guid.Parse(userId) && file.FileName.Contains(keyword), 15, pageIndex, cancellationToken);
 
-            var userFilesDto = _mapper.Map<List<UserFile>, List<UserFileDto>>(userFiles);
-            return Ok(userFilesDto);
+                var userFilesDto = _mapper.Map<List<UserFile>, List<UserFileDto>>(userFiles);
+                return Ok(userFilesDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation(ex.Message);
+                return BadRequest("something wrong");
+            }
         }
 
         [HttpPost]
         [Route("upload")]
-        public async Task<ActionResult<IList<UploadResult>>> PostFile([FromForm] IEnumerable<IFormFile> files, CancellationToken cancellationToken)
+        public async Task<ActionResult<IList<UploadResult>>> Post([FromForm] IEnumerable<IFormFile> files, CancellationToken cancellationToken)
         {
             int maxAllowedFiles = 3;//单次上传最多3个文件
             long maxFileSize = 1024 * 1024 * 10;//单个文件最大长度10MB
@@ -110,26 +137,32 @@ namespace FileRepoSys.Api.Controllers
                 string suffix = file.FileName.Substring(file.FileName.LastIndexOf('.') + 1).ToLower();//提取后缀
                 string fileName = file.FileName.Substring(0, file.FileName.LastIndexOf('.'));//提取文件名
 
+                uploadedCapacity += file.Length;
+
                 if (filesProcessed < maxAllowedFiles)
                 {
                     if (file.Length == 0)
                     {
+                        uploadedCapacity -= file.Length;
                         _logger.LogInformation("{FileName} 长度为 0 (Err: 1)", trustedFileNameForDisplay);
                         uploadResult.ErrorCode = 1;
                     }
                     else if (file.Length > maxFileSize)
                     {
+                        uploadedCapacity -= file.Length;
                         _logger.LogInformation("{FileName} 的长度 {Length} bytes 超过了 {Limit} bytes 的限制  (Err: 2)", trustedFileNameForDisplay, file.Length, maxFileSize);
                         uploadResult.ErrorCode = 2;
                     }
                     else if (!fileTypes.ContainsKey(suffix))
                     {
+                        uploadedCapacity -= file.Length;
                         _logger.LogInformation("contains illegal file");
                         uploadResult.ErrorCode = 8;
                         break;
                     }
                     else if (uploadedCapacity > leftCapacity)
                     {
+                        uploadedCapacity -= file.Length;
                         _logger.LogInformation("account capacity is not enough ");
                         uploadResult.ErrorCode = 7;
                         break;
@@ -156,7 +189,6 @@ namespace FileRepoSys.Api.Controllers
                                 UserId = currentUser.Id
                             };
                             await _userFileRepopsitory.AddOneFile(userFile, cancellationToken);
-                            uploadedCapacity += file.Length;
 
                             _logger.LogInformation("{FileName} saved at {Path}", trustedFileNameForDisplay, fileFullPath);
                             uploadResult.Uploaded = true;
@@ -172,7 +204,7 @@ namespace FileRepoSys.Api.Controllers
                 }
                 else
                 {
-                    _logger.LogInformation("{FileName} not uploaded because the " + "request exceeded the allowed {Count} of files (Err: 4)", trustedFileNameForDisplay, maxAllowedFiles);
+                    _logger.LogInformation("{FileName} not uploaded because the " + "上传文件超出 {Count} 个 (Err: 4)", trustedFileNameForDisplay, maxAllowedFiles);
                     uploadResult.ErrorCode = 4;
                 }
 
@@ -197,27 +229,27 @@ namespace FileRepoSys.Api.Controllers
                 var file = await _userFileRepopsitory.GetOneFile(userFileId, cancellationToken);
                 var user = await _userRepopsitory.GetOneUser(userId, cancellationToken);
 
-                await _userFileRepopsitory.DeleteOneFile(userFileId, cancellationToken);
-
-                if (file==null)
+                if (file == null)
                 {
                     return BadRequest("file is not exist");
                 }
 
+                await _userFileRepopsitory.DeleteOneFile(userFileId, cancellationToken);
                 System.IO.File.Delete(file.FilePath);
                 var currentCapacity = user.CurrentCapacity -= file.FileSize;
                 await _userRepopsitory.UpdateUserCapacity(userId, currentCapacity, cancellationToken);
+                return Ok("delete success");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogInformation(ex.Message);
                 return BadRequest("delete fail");
             }
-            return Ok("delete success");
         }
 
         [HttpGet]
         [Route("download/{fileId}")]
-        public async Task<IActionResult> Get([FromServices] IFileService fileService, string fileId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Get([FromServices] IFileService fileService, string fileId, CancellationToken cancellationToken)
         {
             try
             {
@@ -231,7 +263,8 @@ namespace FileRepoSys.Api.Controllers
             }
             catch (Exception ex)
             {
-                return Problem(ex.Message);//发布时去除
+                _logger.LogInformation(ex.Message);
+                return BadRequest("下载失败");
             }
         }
     }

@@ -13,7 +13,7 @@ namespace FileRepoSys.Web.Pages
         protected override async Task OnInitializedAsync()
         {
             await AuthService.Logout();
-            NavigationManager.NavigateTo("/");
+            NavigationManager.NavigateTo("login");
         }
     }
 }

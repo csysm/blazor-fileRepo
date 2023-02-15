@@ -2,6 +2,7 @@ using FileRepoSys.Api.Data;
 using FileRepoSys.Api.ServiceExtension;
 using FileRepoSys.Api.Util;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -23,8 +24,14 @@ builder.Services.AddExtendServices();
 //自定义AutoMapper
 builder.Services.AddAutoMapper(typeof(CustomeAutoMapperProfile));
 
+//redis
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = "localhost:6379";
+    options.InstanceName = "filerepo_";
+});
 
-builder.Services.AddCors(config => config.AddPolicy("any", p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+builder.Services.AddCors(config => config.AddPolicy("localapi", p => p.WithOrigins("http://43.140.215.157/").AllowAnyMethod().AllowAnyHeader()));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -36,7 +43,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     ValidateLifetime = true,//是否验证key是否过期
                     ValidateIssuer = false,//是否验证颁发者(一般为false)
                     ValidateAudience = false,//是否验证受众(一般为false)
-                    ClockSkew = TimeSpan.FromMinutes(5)
+                    ClockSkew = TimeSpan.FromMinutes(30)
                 };
             });
 
@@ -86,8 +93,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 
-app.UseCors("any");
+app.Urls.Add("http://localhost:5103");
+app.UseCors("localapi");
 
 app.UseAuthentication();
 app.UseAuthorization();

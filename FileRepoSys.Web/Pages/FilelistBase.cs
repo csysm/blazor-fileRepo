@@ -89,7 +89,7 @@ namespace FileRepoSys.Web.Pages
                 else
                 {
                     await _messageService.Warning("登录过期，请重新登录");
-                    _navigationManager.NavigateTo("/");
+                    _navigationManager.NavigateTo("login");
                 }
             }
 

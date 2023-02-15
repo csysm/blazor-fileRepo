@@ -16,18 +16,18 @@ namespace FileRepoSys.Web.Pages
 
         protected override async Task OnInitializedAsync()
         {
-            var response = await _httpClient.GetAsync($"http://localhost:5103/authentication/active?id="+ userId);
+            var response = await _httpClient.GetAsync("authentication/active?userId=" + userId);
             if (response.StatusCode == System.Net.HttpStatusCode.OK)
             {
-                await _msgService.Success("激活成功，请登录");
+                await _msgService.Success(await response.Content.ReadAsStringAsync());
                 await Task.Delay(2000);
-                _navigation.NavigateTo("/");
+                _navigation.NavigateTo("login");
             }
             else
             {
-                await _msgService.Error("激活失败,请联系管理员");
+                await _msgService.Error(await response.Content.ReadAsStringAsync());
                 await Task.Delay(2000);
-                _navigation.NavigateTo("/");
+                _navigation.NavigateTo("login");
             }
 
             await base.OnInitializedAsync();

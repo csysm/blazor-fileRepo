@@ -5,21 +5,24 @@ using FileRepoSys.Api.Repository.Contract;
 using FileRepoSys.Api.Service.Contract;
 using FileRepoSys.Api.Util;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
 namespace FileRepoSys.Api.Controllers
 {
+    [Route("api/authentication")]
     [ApiController]
-    [Route("authentication")]
     public class AuthenticationController : ControllerBase
     {
-        //private readonly IMemoryCache _memoryCache;
-
         private readonly IUserRepository _userRepository;
+        //private readonly IDistributedCache _distributedCache;
+        private readonly ILogger<AuthenticationController> _logger;
         private readonly IHashHelper _md5helper;
+
         public AuthenticationController(IUserRepository userRepository, IHashHelper md5helper)
         {
             _userRepository = userRepository;
@@ -35,14 +38,14 @@ namespace FileRepoSys.Api.Controllers
                 new Claim(ClaimTypes.Email,user.Email),
                 //new Claim("maxCapacity",(user.MaxCapacity/1_073_741_824).ToString()),
                 //new Claim("currentCapacity",(user.CurrentCapacity/1_073_741_824).ToString()),
-                new Claim("expire",DateTime.Now.AddMinutes(5).ToString())
+                new Claim("expire",DateTime.Now.AddMinutes(30).ToString())
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("SEMC-CJAS1-SAD-DCFDE-SAGRTYM-VF"));//密钥
             var token = new JwtSecurityToken(
                 claims: claims,//将claims存储进token
                 notBefore: DateTime.Now,
-                expires: DateTime.Now.AddMinutes(5),//设置过期时间
+                expires: DateTime.Now.AddMinutes(30),//设置过期时间
                 signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
             );
             var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
@@ -51,26 +54,34 @@ namespace FileRepoSys.Api.Controllers
 
         [HttpPost]
         [Route("login")]
-        public async Task<IActionResult> Login([FromBody] UserLoginViewModel viewModel, CancellationToken cancellationToken=default)
+        public async Task<IActionResult> Login([FromBody] UserLoginViewModel viewModel, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetOneUserByEmail(viewModel.Email, cancellationToken);
-            
-            if (user == null || _md5helper.MD5Encrypt32(viewModel.Password) != user.Password)
+            try
             {
-                return Unauthorized();
-            }
-            if (user.IsActive == false)
-            {
-                return Unauthorized("该用户未激活，请联系管理员激活");
-            }
+                var user = await _userRepository.GetOneUserByEmail(viewModel.Email, cancellationToken);
 
-            var jwtToken= CreateJWT(user);
-            return Ok(jwtToken);
+                if (user == null || _md5helper.MD5Encrypt32(viewModel.Password) != user.Password)
+                {
+                    return Unauthorized("用户名或密码错误");
+                }
+                if (user.IsActive == false)
+                {
+                    return Unauthorized("该用户未激活，请联系管理员激活");
+                }
+
+                var jwtToken = CreateJWT(user);
+                return Ok(jwtToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation(ex.Message);
+                return BadRequest("登录异常，请稍后再试");
+            }
         }
 
         [HttpPost]
         [Route("signup")]
-        public async Task<IActionResult> Signup([FromBody] UserAddViewModel viewModel,CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Signup([FromBody] UserAddViewModel viewModel,CancellationToken cancellationToken)
         {
             User newUser = new()
             {
@@ -89,7 +100,7 @@ namespace FileRepoSys.Api.Controllers
             }
             try
             {
-                Mailhelper.SendMail(viewModel.Email, viewModel.UserName, "http://localhost:5113/sign-result/" + userId);
+                Mailhelper.SendMail(viewModel.Email, viewModel.UserName, "http://43.140.215.157/sign-result/"+userId);
                 return Ok("我们已经发送了一封激活邮件到您的邮箱，请查收");
             }
             catch (Exception)
@@ -102,11 +113,11 @@ namespace FileRepoSys.Api.Controllers
 
         [HttpGet]
         [Route("active")]
-        public async Task<IActionResult> Active([FromQuery] string id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Active([FromQuery] string userId, CancellationToken cancellationToken)
         {
-            if(Guid.TryParse(id, out Guid userId))
+            if(Guid.TryParse(userId, out Guid id))
             {
-                int result = await _userRepository.ActiveUser(userId, cancellationToken);
+                int result = await _userRepository.ActiveUser(id, cancellationToken);
                 if (result == 0)
                 {
                     return Ok("激活成功");
@@ -123,7 +134,6 @@ namespace FileRepoSys.Api.Controllers
                 {
                     return BadRequest("该用户已激活");
                 }
-                
             }
             else
             {

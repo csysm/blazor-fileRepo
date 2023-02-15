@@ -30,7 +30,7 @@ namespace FileRepoSys.Web.Pages
                 return;
             }
             await _messageService.Success("登录成功");
-            _navigationManager.NavigateTo("/index");
+            _navigationManager.NavigateTo("index");
         }
 
         protected override async Task OnInitializedAsync()
@@ -56,7 +56,7 @@ namespace FileRepoSys.Web.Pages
 
         public void GoSignup()
         {
-            _navigationManager.NavigateTo("/signup");
+            _navigationManager.NavigateTo("signup");
         }
     }
 }
