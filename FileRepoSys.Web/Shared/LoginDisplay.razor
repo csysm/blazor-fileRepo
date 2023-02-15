@@ -1,11 +1,11 @@
 ﻿<AuthorizeView>
     <Authorized>
-        <a href="/userinfo">@context.User.Identity.Name</a>
-        <a href="/logout">退出</a>
+        <a href="userinfo">@context.User.Identity.Name</a>
+        <a href="logout">退出</a>
     </Authorized>
     <NotAuthorized>
-        <a href="/register">注册</a>
-        <a href="/">登录</a>
+        <a href="signup">注册</a>
+        <a href="login">登录</a>
     </NotAuthorized>
 </AuthorizeView>
 

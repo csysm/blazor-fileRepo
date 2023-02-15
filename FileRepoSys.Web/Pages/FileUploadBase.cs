@@ -4,6 +4,8 @@ using FileRepoSys.Web.Util;
 using Microsoft.AspNetCore.Components.Forms;
 using System.Net.Http.Json;
 using AntDesign;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace FileRepoSys.Web.Pages
 {
@@ -18,10 +20,34 @@ namespace FileRepoSys.Web.Pages
         [Inject]
         public  MessageService _messageService { get; set; }
 
+        [Inject]
+        private NavigationManager _navigationManager { get; set; }
+
+        [Inject]
+        private AuthenticationStateProvider _authenticationStateProvider { get; set; }
+
         public List<File> files = new();
         public List<UploadResult> uploadResults = new();
         public int maxAllowedFiles = 3;
         public bool shouldRender;
+
+        protected override async Task OnInitializedAsync()
+        {
+            var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+            if (authState.User.Identity.IsAuthenticated)
+            {
+                if (DateTime.Now <= DateTime.Parse(authState.User.Claims.First(c => c.Type == "expire").Value))
+                {
+
+                }
+                else
+                {
+                    await _messageService.Warning("登录过期，请重新登录");
+                    _navigationManager.NavigateTo("login");
+                }
+            }
+            await base.OnInitializedAsync();
+        }
 
         protected override bool ShouldRender() => shouldRender;
 
@@ -33,11 +59,27 @@ namespace FileRepoSys.Web.Pages
 
             using var content = new MultipartFormDataContent();
 
+            if (e.FileCount > 3)
+            {
+                await _messageService.Warning("单次上传的文件数不能超过3");
+                return;
+            }
+
             foreach (var file in e.GetMultipleFiles(maxAllowedFiles))
             {
                 if (file.Name.Substring(0, file.Name.LastIndexOf('.')).Length <= 2)
                 {
                     await _messageService.Warning("文件名长度不能小于2");
+                    return;
+                }
+                if (file.Name.Substring(0, file.Name.LastIndexOf('.')).Length > 32)
+                {
+                    await _messageService.Warning("文件名长度不能大于32");
+                    return;
+                }
+                if (file.Size>maxFileSize)
+                {
+                    await _messageService.Warning("单个文件不能大于10MB");
                     return;
                 }
                 if (uploadResults.SingleOrDefault(f => f.FileName == file.Name) is null)
@@ -77,7 +119,7 @@ namespace FileRepoSys.Web.Pages
 
             if (upload)
             {
-                var response = await Http.PostAsync("/files/upload", content);
+                var response = await Http.PostAsync("files/upload", content);
 
                 var newUploadResults = await response.Content.ReadFromJsonAsync<IList<UploadResult>>();
 
