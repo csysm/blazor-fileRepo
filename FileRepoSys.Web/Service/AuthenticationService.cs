@@ -5,7 +5,6 @@ using FileRepoSys.Web.Util;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Security.Claims;
 
 namespace FileRepoSys.Web.Service
 {
@@ -24,27 +23,20 @@ namespace FileRepoSys.Web.Service
             _localStorage = localStorage;
         }
 
-        public async Task<bool> Login(UserLoginViewModel loginViewModel)
+        public async Task<(bool,string)> Login(UserLoginViewModel loginViewModel)
         {
-            //var content = new FormUrlEncodedContent(new KeyValuePair<string, string>[]
-            //{
-            //    new(nameof(UserLoginViewModel.Email), loginViewModel.Email),
-            //    new(nameof(UserLoginViewModel.Password), loginViewModel.Password),
-            //});
             using (var respons = await _httpClient.PostAsJsonAsync("authentication/login", loginViewModel, System.Threading.CancellationToken.None))
             {
                 if (!respons.IsSuccessStatusCode)
                 {
-                    return false;
+                    return (false, await respons.Content.ReadAsStringAsync());
                 }
                 var authToken = await respons.Content.ReadAsStringAsync();
                 await _localStorage.SetItemAsync("authToken", authToken);
 
-                //var state = await _authenticationStateProvider.GetAuthenticationStateAsync();
-                //var username = state.User.Claims.First(c => c.Type == ClaimTypes.Name).Value;
                 ((ApiAuthenticationStateProvider)_authenticationStateProvider).MarkUserAsAuthenticated(loginViewModel.Email);
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
-                return true;
+                return (true, "登录成功");
             }
         }
 

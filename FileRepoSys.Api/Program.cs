@@ -25,13 +25,17 @@ builder.Services.AddExtendServices();
 builder.Services.AddAutoMapper(typeof(CustomeAutoMapperProfile));
 
 //redis
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-    options.Configuration = "localhost:6379";
-    options.InstanceName = "filerepo_";
-});
+//builder.Services.AddStackExchangeRedisCache(options =>
+//{
+//    options.Configuration = "localhost:6379";
+//    options.InstanceName = "filerepo_";
+//});
+
+//memorycache
+builder.Services.AddMemoryCache();
 
 builder.Services.AddCors(config => config.AddPolicy("localapi", p => p.WithOrigins("http://43.140.215.157/").AllowAnyMethod().AllowAnyHeader()));
+//builder.Services.AddCors(config => config.AddPolicy("localtest", p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>

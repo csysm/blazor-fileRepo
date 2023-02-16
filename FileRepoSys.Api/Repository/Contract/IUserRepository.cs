@@ -17,14 +17,16 @@ namespace FileRepoSys.Api.Repository.Contract
 
         Task<User> GetOneUserByEmail(string email,CancellationToken cancellationToken = default);
 
-        Task<List<User>> GetUsers(Expression<Func<User,bool>> lambda,CancellationToken cancellationToken = default);
+        Task<List<User>> GetUsers(Expression<Func<User,bool>> predicate, CancellationToken cancellationToken = default);
 
-        Task<List<User>> GetUsersByPage(Expression<Func<User, bool>> lambda, int pageSize, int pageIndex, CancellationToken cancellationToken = default, bool desc = true);
+        Task<List<User>> GetUsersByPage(Expression<Func<User, bool>> predicate, int pageSize, int pageIndex, CancellationToken cancellationToken = default, bool desc = true);
 
         Task<int> UpdateUserName(User user, CancellationToken cancellationToken = default);
 
         Task<int> UpdateUserPassword(string oldPassword, User user,  CancellationToken cancellationToken = default);
 
         Task<int> UpdateUserCapacity(Guid id, long currentCapacity, CancellationToken cancellationToken = default);
+
+        Task<int> GetUsersCount(CancellationToken cancellationToken = default);
     }
 }

@@ -62,7 +62,6 @@ namespace FileRepoSys.Api.Controllers
                     return BadRequest("update fail");
                 }
 
-                await _distributedCache.RemoveAsync($"user-{viewModel.Id}");//remove cache
                 return Ok("update success");
             }
             catch (Exception ex)
@@ -89,7 +88,7 @@ namespace FileRepoSys.Api.Controllers
                 {
                     return BadRequest("密码错误");
                 }
-                await _distributedCache.RemoveAsync($"user-{viewModel.Id}");//remove cache
+                
                 return Ok("修改成功");
             }
             catch (Exception ex)
