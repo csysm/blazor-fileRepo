@@ -13,5 +13,12 @@ namespace FileRepoSys.Api.Models.AuthenticationModels
         [Display(Name="密码")]
         [StringLength(20, MinimumLength = 3)]
         public string Password { get; set;}
+
+        [Required]
+        [Display(Name ="验证码")]
+        [StringLength(4)]
+        public string VerifyCode { get; set;}
+
+        public string? VerifyKey { get; set;}
     }
 }

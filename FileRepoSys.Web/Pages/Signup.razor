@@ -28,6 +28,14 @@
             </Prefix>
         </InputPassword>
     </FormItem>
+    <FormItem WrapperColOffset="0" WrapperColSpan="4">
+        <InputPassword Placeholder="请输入验证码" @bind-Value="@context.VerifyCode">
+            <Prefix>
+                <Icon Type="lock"></Icon>
+            </Prefix>
+        </InputPassword>
+        <Image Width="200px" Src="@VerifyCodeImg" />
+    </FormItem>
     <FormItem WrapperColOffset="11" WrapperColSpan="2">
         <Button Type="@ButtonType.Primary" HtmlType="submit" Block>
             注册

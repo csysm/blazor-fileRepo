@@ -29,7 +29,7 @@ namespace FileRepoSys.Api.Repository
             }
             await _dbContext.AddAsync(user);
             await _dbContext.SaveChangesAsync(cancellationToken);
-            return user.Id.ToString();
+            return user.Id.ToString();//返回自动生成的主键值
         }
 
         public async Task<int> DeleteOneUser(Guid id, CancellationToken cancellationToken = default)
@@ -46,6 +46,7 @@ namespace FileRepoSys.Api.Repository
         public async Task<int> UpdateUser(User user, CancellationToken cancellationToken = default)
         {
             //_dbContext.Entry(user).State = EntityState.Modified;
+
             //_dbContext.Attach(user);
             _dbContext.Update(user);
             return await _dbContext.SaveChangesAsync(cancellationToken);
@@ -60,7 +61,7 @@ namespace FileRepoSys.Api.Repository
         public async Task<int> UpdateUserPassword(string oldPassword,User user, CancellationToken cancellationToken = default)
         {
             bool isExisted= await _dbContext.Users.AnyAsync(u => u.Id == user.Id && u.Password == oldPassword);
-            if (isExisted)//若用户不存在
+            if (!isExisted)//若用户不存在
             {
                 return 0;
             }
@@ -100,17 +101,17 @@ namespace FileRepoSys.Api.Repository
             return _dbContext.Users.SingleOrDefaultAsync(user => user.Email == email, cancellationToken);
         }
 
-        public async Task<List<User>> GetUsers(Expression<Func<User, bool>> lambda, CancellationToken cancellationToken = default)
+        public async Task<List<User>> GetUsers(Expression<Func<User, bool>> predicate, CancellationToken cancellationToken = default)
         {
-            return await _dbContext.Users.Where(lambda).ToListAsync(cancellationToken);
+            return await _dbContext.Users.Where(predicate).ToListAsync(cancellationToken);
         }
 
-        public async Task<List<User>> GetUsersByPage(Expression<Func<User, bool>> lambda, int pageSize, int pageIndex,  CancellationToken cancellationToken = default, bool desc = true)
+        public async Task<List<User>> GetUsersByPage(Expression<Func<User, bool>> predicate, int pageSize, int pageIndex,  CancellationToken cancellationToken = default, bool desc = true)
         {
             if (desc)
-                return await _dbContext.Users.Where(lambda).OrderByDescending(user => user.CreateTime).Skip(pageSize * (pageIndex - 1)).Take(pageSize).ToListAsync(cancellationToken);
+                return await _dbContext.Users.Where(predicate).OrderByDescending(user => user.CreateTime).Skip(pageSize * (pageIndex - 1)).Take(pageSize).ToListAsync(cancellationToken);
             else
-                return await _dbContext.Users.Where(lambda).OrderBy(user => user.CreateTime).Skip(pageSize * (pageIndex - 1)).Take(pageSize).ToListAsync(cancellationToken);
+                return await _dbContext.Users.Where(predicate).OrderBy(user => user.CreateTime).Skip(pageSize * (pageIndex - 1)).Take(pageSize).ToListAsync(cancellationToken);
         }
 
         public async Task<int> UpdateUserCapacity(Guid id, long currentCapacity, CancellationToken cancellationToken = default)
@@ -123,6 +124,11 @@ namespace FileRepoSys.Api.Repository
             //_dbContext.Attach(user);
             _dbContext.Entry(user).Property(u => u.CurrentCapacity).IsModified = true;
             return await _dbContext.SaveChangesAsync();
+        }
+
+        public Task<int> GetUsersCount(CancellationToken cancellationToken = default)
+        {
+            return _dbContext.Users.IgnoreQueryFilters().CountAsync(cancellationToken);
         }
     }
 }

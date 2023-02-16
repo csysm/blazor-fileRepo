@@ -6,8 +6,8 @@ using FileRepoSys.Api.Service.Contract;
 using FileRepoSys.Api.Util;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -19,14 +19,16 @@ namespace FileRepoSys.Api.Controllers
     public class AuthenticationController : ControllerBase
     {
         private readonly IUserRepository _userRepository;
-        //private readonly IDistributedCache _distributedCache;
+        private readonly IMemoryCache _memoryCache;
         private readonly ILogger<AuthenticationController> _logger;
         private readonly IHashHelper _md5helper;
 
-        public AuthenticationController(IUserRepository userRepository, IHashHelper md5helper)
+        public AuthenticationController(IUserRepository userRepository,IMemoryCache memoryCache ,IHashHelper md5helper, ILogger<AuthenticationController> logger)
         {
             _userRepository = userRepository;
+            _memoryCache = memoryCache;
             _md5helper = md5helper;
+            _logger = logger;
         }
 
         private string CreateJWT(User user)
@@ -52,10 +54,50 @@ namespace FileRepoSys.Api.Controllers
             return jwtToken;
         }
 
+
+        [HttpGet]
+        [Route("verifycode/{verifyKey}")]
+        public IActionResult GetVerifyCode(string verifyKey)
+        {
+            try
+            {
+                VerifyCode verifyCode = new VerifyCode();
+                verifyCode.SetHeight = 32;
+                verifyCode.SetWith = 120;
+                verifyCode.SetFontSize = 24;
+
+                byte[] image = verifyCode.GetVerifyCodeImage();
+                var anwser = verifyCode.SetVerifyCodeText;
+
+                _memoryCache.Set(verifyKey, anwser.ToLower(), DateTimeOffset.Now.AddSeconds(60));
+                _logger.LogInformation("获取验证码");
+                return File(image, "image/png");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation(ex.Message);
+                throw;
+            }
+        }
+
         [HttpPost]
         [Route("login")]
         public async Task<IActionResult> Login([FromBody] UserLoginViewModel viewModel, CancellationToken cancellationToken)
         {
+            if (string.IsNullOrEmpty(viewModel.VerifyKey))
+            {
+                return Unauthorized("验证码已过期");
+            }
+            _memoryCache.TryGetValue(viewModel.VerifyKey, out string verifyCode);
+            if (string.IsNullOrEmpty(verifyCode))
+            {
+                return Unauthorized("验证码已过期");
+            }
+
+            if (!verifyCode.Equals(viewModel.VerifyCode.ToLower()))
+            {
+                return Unauthorized("验证码错误");
+            }
             try
             {
                 var user = await _userRepository.GetOneUserByEmail(viewModel.Email, cancellationToken);
@@ -66,7 +108,7 @@ namespace FileRepoSys.Api.Controllers
                 }
                 if (user.IsActive == false)
                 {
-                    return Unauthorized("该用户未激活，请联系管理员激活");
+                    return Unauthorized("该用户未激活");
                 }
 
                 var jwtToken = CreateJWT(user);
@@ -83,6 +125,26 @@ namespace FileRepoSys.Api.Controllers
         [Route("signup")]
         public async Task<IActionResult> Signup([FromBody] UserAddViewModel viewModel,CancellationToken cancellationToken)
         {
+            if (string.IsNullOrEmpty(viewModel.VerifyKey))
+            {
+                return Unauthorized("验证码已过期");
+            }
+            _memoryCache.TryGetValue(viewModel.VerifyKey, out string verifyCode);
+            if (string.IsNullOrEmpty(verifyCode))
+            {
+                return Unauthorized("验证码已过期");
+            }
+
+            if (!verifyCode.Equals(viewModel.VerifyCode.ToLower()))
+            {
+                return Unauthorized("验证码错误");
+            }
+
+            if (await _userRepository.GetUsersCount() > 20)
+            {
+                return BadRequest("抱歉,注册用户已满");
+            }
+
             User newUser = new()
             {
                 Email = viewModel.Email,
@@ -124,7 +186,7 @@ namespace FileRepoSys.Api.Controllers
                 }
                 else if (result == 1)
                 {
-                    return BadRequest("激活失败，不存在该用户");
+                    return BadRequest("不存在该用户");
                 }
                 else if (result == 2)
                 {

@@ -4,7 +4,7 @@ namespace FileRepoSys.Web.Service.Contract
 {
     public interface IAuthenticationService
     {
-        Task<bool> Login(UserLoginViewModel loginViewModel);
+        Task<(bool, string)> Login(UserLoginViewModel loginViewModel);
         Task Logout();
     }
 }

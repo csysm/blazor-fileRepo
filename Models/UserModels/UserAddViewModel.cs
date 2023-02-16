@@ -20,5 +20,12 @@ namespace FileRepoSys.Api.Models.UserModels
         [MaxLength(20)]
         [MinLength(6)]
         public string Password { get; set; }
+
+        [Required]
+        [Display(Name = "验证码")]
+        [StringLength(4)]
+        public string VerifyCode { get; set; }
+
+        public string? VerifyKey { get; set; }
     }
 }

@@ -22,7 +22,22 @@
         <a class="dismiss">🗙</a>
     </div>
     <script>
-    /*JS下载文件*/
+        /**js转换图片**/
+        /** 将byte转url对象 */
+        function byteToUrl(blob) {
+            // 适配webview和web
+            var myBlob = new Blob([blob], { type: "image/png" });
+            return (window.URL || window.webkitURL || window || {}).createObjectURL(myBlob);
+        }
+        /**
+        * 释放url对象，因为createObjectURL创建的对象一直会存在可能会占用过多的内存，请注意释放
+        */
+        function revokeUrl(url) {
+            (window.URL || window.webkitURL || window || {}).revokeObjectURL(url);
+        }
+    </script>
+    <script>
+        /*JS下载文件*/
         window.downloadFileFromStream = async (fileName, contentStreamReference) => {
             const arrayBuffer = await contentStreamReference.arrayBuffer();
             const blob = new Blob([arrayBuffer]);

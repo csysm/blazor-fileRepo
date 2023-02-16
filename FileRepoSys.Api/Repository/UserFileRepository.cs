@@ -36,17 +36,24 @@ namespace FileRepoSys.Api.Repository
             return _dbContext.UserFiles.SingleOrDefaultAsync(file=>file.Id == id,cancellationToken);
         }
 
-        public async Task<List<UserFile>> GetFiles(Expression<Func<UserFile, bool>> lambda, CancellationToken cancellationToken = default)
+        public async Task<List<UserFile>> GetFiles(Expression<Func<UserFile, bool>> predicate, CancellationToken cancellationToken = default)
         {
-            return await _dbContext.UserFiles.Where(lambda).ToListAsync(cancellationToken);
+            return await _dbContext.UserFiles.Where(predicate).ToListAsync(cancellationToken);
         }
 
-        public async Task<List<UserFile>> GetFilesByPage(Expression<Func<UserFile, bool>> lambda,int pageSize,int pageIndex, CancellationToken cancellationToken = default, bool desc=true)
+        public async Task<List<UserFile>> GetFilesByPage(Expression<Func<UserFile, bool>> predicate, int pageSize,int pageIndex, CancellationToken cancellationToken = default, bool desc=true)
         {
-            if(desc)
-                return await _dbContext.UserFiles.Where(lambda).OrderByDescending(file => file.CreateTime).Skip(pageSize * (pageIndex - 1)).Take(pageSize).ToListAsync(cancellationToken);
-            else
-                return await _dbContext.UserFiles.Where(lambda).OrderBy(file => file.CreateTime).Skip(pageSize*(pageIndex-1)).Take(pageSize).ToListAsync(cancellationToken);
+            try
+            {
+                if (desc)
+                    return await _dbContext.UserFiles.Where(predicate).OrderByDescending(file => file.CreateTime).Skip(pageSize * (pageIndex - 1)).Take(pageSize).ToListAsync(cancellationToken);
+                else
+                    return await _dbContext.UserFiles.Where(predicate).OrderBy(file => file.CreateTime).Skip(pageSize * (pageIndex - 1)).Take(pageSize).ToListAsync(cancellationToken);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         public Task<int> GetFilesCount(Guid id, CancellationToken cancellationToken = default)

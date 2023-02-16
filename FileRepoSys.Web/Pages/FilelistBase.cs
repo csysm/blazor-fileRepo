@@ -13,17 +13,14 @@ namespace FileRepoSys.Web.Pages
     {
         [Inject]
         private HttpClient _httpClient { get; set; }
-
         [Inject]
         private NavigationManager _navigationManager { get; set; }
-
         [Inject]
-        private AuthenticationStateProvider _authenticationStateProvider { get; set; }
-
+        private AuthenticationStateProvider _authStateProvider { get; set; }
         [Inject]
-        private MessageService _messageService { get; set; }
-
-        [Inject] IJSRuntime JS { get; set; }
+        private MessageService _msgService { get; set; }
+        [Inject] 
+        IJSRuntime JS { get; set; }
 
         public string? UserId { get; set; }
         public FilelistDto fileListDto { get; set; } = new FilelistDto()
@@ -40,11 +37,11 @@ namespace FileRepoSys.Web.Pages
                 var fileStream = await _httpClient.GetStreamAsync($"files/download/{fileId}");
                 using var streamRef = new DotNetStreamReference(fileStream);
                 await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
-                await _messageService.Success("下载成功");
+                await _msgService.Success("下载成功");
             }
             catch (Exception)
             {
-                await _messageService.Error("下载失败");
+                await _msgService.Error("下载失败");
             }
         }
 
@@ -55,11 +52,11 @@ namespace FileRepoSys.Web.Pages
             if (response.IsSuccessStatusCode)
             {
                 await LoadData(UserId, CurrentPageIndex);
-                await _messageService.Success("删除成功");
+                await _msgService.Success("删除成功");
             }
             else
             {
-                await _messageService.Error("删除失败");
+                await _msgService.Error("删除失败");
             }
         }
 
@@ -71,7 +68,7 @@ namespace FileRepoSys.Web.Pages
 
         protected override async Task OnInitializedAsync()
         {
-            var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+            var authState = await _authStateProvider.GetAuthenticationStateAsync();
             if (authState.User.Identity.IsAuthenticated)
             {
                 if (DateTime.Now <= DateTime.Parse(authState.User.Claims.First(c => c.Type == "expire").Value))
@@ -83,12 +80,12 @@ namespace FileRepoSys.Web.Pages
                     }
                     catch (Exception)
                     {
-                        await _messageService.Error("请求错误,请稍后再试");
+                        await _msgService.Error("请求错误,请稍后再试");
                     }
                 }
                 else
                 {
-                    await _messageService.Warning("登录过期，请重新登录");
+                    await _msgService.Warning("登录过期，请重新登录");
                     _navigationManager.NavigateTo("login");
                 }
             }
