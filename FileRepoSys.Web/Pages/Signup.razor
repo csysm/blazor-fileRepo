@@ -29,16 +29,23 @@
         </InputPassword>
     </FormItem>
     <FormItem WrapperColOffset="0" WrapperColSpan="4">
-        <InputPassword Placeholder="请输入验证码" @bind-Value="@context.VerifyCode">
+        <AntDesign.Input Placeholder="请输入验证码" @bind-Value="@context.VerifyCode">
             <Prefix>
-                <Icon Type="lock"></Icon>
+                <Icon Type="forward"></Icon>
             </Prefix>
-        </InputPassword>
-        <Image Width="200px" Src="@VerifyCodeImg" />
+        </AntDesign.Input>
+    </FormItem>
+    <FormItem WrapperColOffset="11" WrapperColSpan="4">
+        <Image Width="160px" Src="@VerifyCodeImg" Preview=false/>
     </FormItem>
     <FormItem WrapperColOffset="11" WrapperColSpan="2">
         <Button Type="@ButtonType.Primary" HtmlType="submit" Block>
             注册
+        </Button>
+    </FormItem>
+    <FormItem WrapperColOffset="11" WrapperColSpan="2">
+        <Button Type="@ButtonType.Link" HtmlType="submit" Block OnClick=GoLogin>
+            登录
         </Button>
     </FormItem>
 </AntDesign.Form>

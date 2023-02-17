@@ -17,6 +17,8 @@ namespace FileRepoSys.Web.Pages
         IJSRuntime JS { get; set; }
         [Inject]
         private MessageService _msgService { get; set; }
+        [Inject]
+        private NavigationManager _navigationManager { get; set; }
 
         public UserAddViewModel userAddViewModel { get; set; }=new UserAddViewModel();
 
@@ -58,6 +60,11 @@ namespace FileRepoSys.Web.Pages
             {
                 await _msgService.Error("验证码获取失败");
             }
+        }
+
+        public void GoLogin()
+        {
+            _navigationManager.NavigateTo("login");
         }
     }
 }
