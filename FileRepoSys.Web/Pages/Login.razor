@@ -5,7 +5,7 @@
 
 <AntDesign.Form Model="@userLoginViewModel" Style="height:100%"
                 OnFinish="Login_Click"
-                LabelColSpan="4" 
+                LabelColSpan="4"
                 LabelColOffset="6"
                 WrapperColSpan="4">
     <FormItem WrapperColOffset="0" WrapperColSpan="4">
@@ -23,12 +23,14 @@
         </InputPassword>
     </FormItem>
     <FormItem WrapperColOffset="0" WrapperColSpan="4">
-        <InputPassword Placeholder="请输入验证码" @bind-Value="@context.VerifyCode">
+        <AntDesign.Input Placeholder="请输入验证码" @bind-Value="@context.VerifyCode">
             <Prefix>
-                <Icon Type="lock"></Icon>
+                <Icon Type="forward"></Icon>
             </Prefix>
-        </InputPassword>
-        <Image Width="200px" Src="@VerifyCodeImg" />
+        </AntDesign.Input>
+    </FormItem>
+    <FormItem WrapperColOffset="11" WrapperColSpan="4">
+        <Image Width="160px" Src="@VerifyCodeImg" Preview=false/>
     </FormItem>
     <FormItem WrapperColOffset="11" WrapperColSpan="2">
         <Button Type="@ButtonType.Primary" HtmlType="submit" Block>
