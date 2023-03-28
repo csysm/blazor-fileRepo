@@ -70,7 +70,7 @@ namespace FileRepoSys.Api.Migrations
             migrationBuilder.InsertData(
                 table: "Users",
                 columns: new[] { "Id", "CreateTime", "CurrentCapacity", "Email", "IsActive", "IsDeleted", "MaxCapacity", "Password", "UserName" },
-                values: new object[] { new Guid("07dc2516-590c-46d9-adf4-d1c89b67b991"), new DateTime(2023, 2, 9, 23, 10, 38, 633, DateTimeKind.Local).AddTicks(408), 0L, "593676339@qq.com", true, false, 10485760L, "123", "wxx" });
+                values: new object[] { new Guid("2e2ab1c3-4a42-43be-a0a3-6df8b42e0fd8"), new DateTime(2023, 3, 28, 13, 9, 33, 378, DateTimeKind.Local).AddTicks(7833), 0L, "593676339@qq.com", true, false, 10485760L, "123", "wxx" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserFiles_UserId",

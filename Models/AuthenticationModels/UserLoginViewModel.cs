@@ -19,6 +19,7 @@ namespace FileRepoSys.Api.Models.AuthenticationModels
         [StringLength(4)]
         public string VerifyCode { get; set;}
 
-        public string? VerifyKey { get; set;}
+        [Required]
+        public string VerifyKey { get; set;}
     }
 }

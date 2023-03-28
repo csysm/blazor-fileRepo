@@ -2,14 +2,13 @@
 using FileRepoSys.Api.Entities;
 using FileRepoSys.Api.Models;
 using FileRepoSys.Api.Repository.Contract;
-using FileRepoSys.Api.Service.Contract;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Models.UserFileModels;
 using System.Net;
-using Microsoft.Extensions.Caching.Distributed;
-using Newtonsoft.Json;
+using FileRepoSys.Api.Services.Contract;
+using FileRepoSys.Api.Uow.Contract;
 
 namespace FileRepoSys.Api.Controllers
 {
@@ -20,38 +19,32 @@ namespace FileRepoSys.Api.Controllers
     {
         private readonly IUserFileRepository _userFileRepopsitory;
         private readonly IUserRepository _userRepopsitory;
-        private readonly IMapper _mapper;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<UserFilesController> _logger;
-        private readonly IWebHostEnvironment _webHostEnvironment;
-        public UserFilesController(IUserFileRepository userFileRepopsitory, IUserRepository userRepopsitory, IMapper mapper, IWebHostEnvironment webHostEnvironment, ILogger<UserFilesController> logger)
+
+        public UserFilesController(IUserFileRepository userFileRepopsitory, IUserRepository userRepopsitory, IMapper mapper, ILogger<UserFilesController> logger, IUnitOfWork unitOfWork)
         {
             _userFileRepopsitory = userFileRepopsitory;
             _userRepopsitory = userRepopsitory;
-            _mapper = mapper;
-            _webHostEnvironment = webHostEnvironment;
+
             _logger = logger;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpGet]
-        public async Task<ActionResult<FilelistDto>> Get(string userId, int pageIndex, CancellationToken cancellationToken)
+        public async Task<ActionResult<FilelistDto>> Get([FromServices] IMapper _mapper, Guid userId, int pageIndex, CancellationToken cancellationToken)
         {
-            Guid userIdGuid = Guid.Empty;
-            if (!Guid.TryParse(userId,out userIdGuid))
-            {
-                return BadRequest("不存在的id");
-            }
-
             try
             {
-                var userFiles = await _userFileRepopsitory.GetFilesByPage(file => file.UserId == Guid.Parse(userId), 15, pageIndex, cancellationToken);
-                int count = await _userFileRepopsitory.GetFilesCount(Guid.Parse(userId));
-                var userFileDtos = _mapper.Map<List<UserFile>, List<UserFileDto>>(userFiles);
+                var userFileList = await _userFileRepopsitory.GetFilesByPage(file => file.UserId == userId, 15, pageIndex, cancellationToken);
+                int userFileCount = await _userFileRepopsitory.GetFilesCount(userId);
+                var userFileDtoList = _mapper.Map<List<UserFile>, List<UserFileDto>>(userFileList);
 
-                FilelistDto fileListDto = new();
-                fileListDto.CurrentPageFiles = userFileDtos;
-                fileListDto.TotalCount = count;
+                FilelistDto filePageDto = new();
+                filePageDto.CurrentPageFiles = userFileDtoList;
+                filePageDto.TotalCount = userFileCount;
 
-                return Ok(fileListDto);
+                return Ok(filePageDto);
             }
             catch (Exception ex)
             {
@@ -62,20 +55,18 @@ namespace FileRepoSys.Api.Controllers
 
         [HttpGet]
         [Route("search")]
-        public async Task<IActionResult> Get(string userId, string keyword, int pageIndex, CancellationToken cancellationToken)
+        public async Task<IActionResult> Get([FromServices] IMapper _mapper, Guid userId, string keyword, int pageIndex, CancellationToken cancellationToken)
         {
-            Guid userIdGuid = Guid.Empty;
-            if (!Guid.TryParse(userId, out userIdGuid))
-            {
-                return BadRequest("不存在的id");
-            }
-
             try
             {
-                var userFiles = await _userFileRepopsitory.GetFilesByPage(file => file.UserId == Guid.Parse(userId) && file.FileName.Contains(keyword), 15, pageIndex, cancellationToken);
+                var userFileList = await _userFileRepopsitory.GetFilesByPage(file => file.UserId == userId && file.FileName.Contains(keyword), 15, pageIndex, cancellationToken);
+                var userFileDtoList = _mapper.Map<List<UserFile>, List<UserFileDto>>(userFileList);
 
-                var userFilesDto = _mapper.Map<List<UserFile>, List<UserFileDto>>(userFiles);
-                return Ok(userFilesDto);
+                FilelistDto filePageDto = new();
+                filePageDto.CurrentPageFiles = userFileDtoList;
+                filePageDto.TotalCount = userFileDtoList.Count;
+
+                return Ok(filePageDto);
             }
             catch (Exception ex)
             {
@@ -86,17 +77,24 @@ namespace FileRepoSys.Api.Controllers
 
         [HttpPost]
         [Route("upload")]
-        public async Task<ActionResult<IList<UploadResult>>> Post([FromForm] IEnumerable<IFormFile> files, CancellationToken cancellationToken)
+        public async Task<ActionResult<IList<UploadResult>>> Post([FromServices] IWebHostEnvironment _webHostEnvironment, [FromForm] IEnumerable<IFormFile> files, CancellationToken cancellationToken)
         {
-            int maxAllowedFiles = 3;//单次上传最多3个文件
-            long maxFileSize = 1024 * 1024 * 10;//单个文件最大长度10MB
-            int filesProcessed = 0;//已经处理的文件数量
-            var resourcePath = new Uri($"{Request.Scheme}://{Request.Host}/");
-            List<UploadResult> uploadResults = new();
+            Guid userId = Guid.Parse(User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            var user = await _userRepopsitory.GetOneUser(userId, cancellationToken);
+            long leftCapacity = user.MaxCapacity - user.CurrentCapacity;
 
-            Guid currentUserId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            var currentUser = await _userRepopsitory.GetOneUser(currentUserId, cancellationToken);
-            long leftCapacity = currentUser.MaxCapacity - currentUser.CurrentCapacity;
+            if (leftCapacity < files.Sum(f => f.Length))
+            {
+                _logger.LogInformation("账户容量不足");
+                return BadRequest("账户容量不足");
+            }
+
+            const int maxAllowedFiles = 3;  //单次上传最多3个文件
+            const long maxFileSize = 1024 * 1024 * 10;  //单个文件最大长度10MB
+            int filesProcessed = 0; //已经处理的文件数量
+
+            var uploadResults = new List<UploadResult>();
+
             long uploadedCapacity = 0;
 
             Dictionary<string, string> fileTypes = new Dictionary<string, string>(new List<KeyValuePair<string, string>>()
@@ -112,6 +110,8 @@ namespace FileRepoSys.Api.Controllers
                     new KeyValuePair<string,string>("docx","application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
                     new KeyValuePair<string,string>("xls","application/vnd.ms-excel"),
                     new KeyValuePair<string,string>("xlsx","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+                    new KeyValuePair<string,string>("ppt","application/vnd.ms-powerpoint"),
+                    new KeyValuePair<string,string>("pptx","application/vnd.openxmlformats-officedocument.presentationml.presentation"),
                     new KeyValuePair<string,string>("mp3","audio/mpeg"),
                     new KeyValuePair<string,string>("zip","application/zip"),
                     new KeyValuePair<string,string>("rar","application/x-rar-compressed"),
@@ -119,7 +119,7 @@ namespace FileRepoSys.Api.Controllers
                     new KeyValuePair<string,string>("json","application/json")
                 });
 
-            var fileDirectoryPath = Path.Combine(_webHostEnvironment.ContentRootPath, "UserFiles", currentUser.Email);
+            var fileDirectoryPath = Path.Combine(_webHostEnvironment.ContentRootPath, "UserFiles", user.Email);
             if (!Directory.Exists(fileDirectoryPath))
             {
                 Directory.CreateDirectory(fileDirectoryPath);
@@ -127,53 +127,37 @@ namespace FileRepoSys.Api.Controllers
 
             foreach (var file in files)
             {
+                filesProcessed++;
+
                 var uploadResult = new UploadResult();
-                string trustedFileNameForFileStorage;
-                var untrustedFileName = file.FileName;
-                uploadResult.FileName = untrustedFileName;
-                var trustedFileNameForDisplay = WebUtility.HtmlEncode(untrustedFileName);
-                
+                uploadResult.FileName = file.FileName;
 
-                string suffix = file.FileName.Substring(file.FileName.LastIndexOf('.') + 1).ToLower();//提取后缀
                 string fileName = file.FileName.Substring(0, file.FileName.LastIndexOf('.'));//提取文件名
+                string suffix = file.FileName.Substring(file.FileName.LastIndexOf('.') + 1).ToLower();//提取后缀
 
-                uploadedCapacity += file.Length;
-
-                if (filesProcessed < maxAllowedFiles)
+                if (filesProcessed <= maxAllowedFiles)
                 {
-                    if (file.Length == 0)
+                    if (file.Length == 0 || file.Length > maxFileSize)
                     {
-                        uploadedCapacity -= file.Length;
-                        _logger.LogInformation("{FileName} 长度为 0 (Err: 1)", trustedFileNameForDisplay);
+                        _logger.LogInformation($"{fileName} 文件大小为有误 (ERR:1)");
                         uploadResult.ErrorCode = 1;
                     }
-                    else if (file.Length > maxFileSize)
+                    else if (fileName.Length<3|| fileName.Length>64)
                     {
-                        uploadedCapacity -= file.Length;
-                        _logger.LogInformation("{FileName} 的长度 {Length} bytes 超过了 {Limit} bytes 的限制  (Err: 2)", trustedFileNameForDisplay, file.Length, maxFileSize);
+                        _logger.LogInformation($"{fileName} 文件名长度有误 (ERR:2)");
                         uploadResult.ErrorCode = 2;
                     }
                     else if (!fileTypes.ContainsKey(suffix))
                     {
-                        uploadedCapacity -= file.Length;
-                        _logger.LogInformation("contains illegal file");
-                        uploadResult.ErrorCode = 8;
-                        break;
-                    }
-                    else if (uploadedCapacity > leftCapacity)
-                    {
-                        uploadedCapacity -= file.Length;
-                        _logger.LogInformation("account capacity is not enough ");
-                        uploadResult.ErrorCode = 7;
-                        break;
+                        _logger.LogInformation("非法文件类型");
+                        uploadResult.ErrorCode = 3;
                     }
                     else
                     {
                         try
                         {
-                            trustedFileNameForFileStorage = Path.GetRandomFileName();
-
-                            var fileFullPath = Path.Combine(fileDirectoryPath, trustedFileNameForFileStorage);
+                            string trustedFileStorageName = Path.GetRandomFileName();
+                            string fileFullPath = Path.Combine(fileDirectoryPath, trustedFileStorageName);
 
                             await using FileStream fs = new(fileFullPath, FileMode.Create);
                             await file.CopyToAsync(fs);
@@ -181,89 +165,88 @@ namespace FileRepoSys.Api.Controllers
                             UserFile userFile = new UserFile()
                             {
                                 FileName = fileName,
-                                FileStorageName = trustedFileNameForFileStorage,
+                                FileStorageName = trustedFileStorageName,
                                 FilePath = fileFullPath,
                                 FileSize = file.Length,
                                 MimeType = fileTypes[suffix],
                                 Suffix = suffix,
-                                UserId = currentUser.Id
+                                UserId = user.Id
                             };
                             await _userFileRepopsitory.AddOneFile(userFile, cancellationToken);
 
-                            _logger.LogInformation("{FileName} saved at {Path}", trustedFileNameForDisplay, fileFullPath);
                             uploadResult.Uploaded = true;
-                            uploadResult.StoredFileName = trustedFileNameForFileStorage;
+                            uploadResult.StoredFileName = trustedFileStorageName;
+                            _logger.LogInformation($"上传文件 {fileName} 成功 {fileFullPath}");
+
+                            uploadedCapacity += file.Length;
                         }
                         catch (IOException ex)
                         {
-                            _logger.LogError("{FileName} error on upload (Err: 3): {Message}", trustedFileNameForDisplay, ex.Message);
-                            uploadResult.ErrorCode = 3;
+                            _logger.LogError($"上传文件 {fileName} 错误 (ERR: 3): {ex.Message}");
+                            uploadResult.ErrorCode = 4;
                         }
                     }
-                    filesProcessed++;
                 }
                 else
                 {
-                    _logger.LogInformation("{FileName} not uploaded because the " + "上传文件超出 {Count} 个 (Err: 4)", trustedFileNameForDisplay, maxAllowedFiles);
-                    uploadResult.ErrorCode = 4;
+                    _logger.LogWarning($"{fileName} 未上传该文件,上传文件超出 {maxAllowedFiles} 个 (ERR: 4)");
+                    uploadResult.ErrorCode = 5;
                 }
-
                 uploadResults.Add(uploadResult);
             }
-            if(uploadedCapacity>0)
+
+            if (uploadedCapacity > 0)
             {
-                await _userRepopsitory.UpdateUserCapacity(currentUserId, currentUser.CurrentCapacity + uploadedCapacity, cancellationToken);
+                user.CurrentCapacity += uploadedCapacity;
+                await _userRepopsitory.UpdateUser(user, user => user.CurrentCapacity);
+                await _unitOfWork.SaveChangesAsync();
             }
-            return new CreatedResult(resourcePath, uploadResults);
+
+            return uploadResults;
         }
 
         [HttpDelete]
         [Route("delete/{fileId}")]
-        public async Task<IActionResult> Delete(string fileId, CancellationToken cancellationToken)
+        public async Task<IActionResult> Delete(Guid fileId, CancellationToken cancellationToken)
         {
             try
             {
-                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
-                var userFileId = Guid.Parse(fileId);
+                var userId = Guid.Parse(User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value);
 
-                var file = await _userFileRepopsitory.GetOneFile(userFileId, cancellationToken);
                 var user = await _userRepopsitory.GetOneUser(userId, cancellationToken);
+                var file = await _userFileRepopsitory.GetOneFile(fileId, cancellationToken);
 
-                if (file == null)
-                {
-                    return BadRequest("file is not exist");
-                }
-
-                await _userFileRepopsitory.DeleteOneFile(userFileId, cancellationToken);
+                await _userFileRepopsitory.DeleteOneFile(fileId);
                 System.IO.File.Delete(file.FilePath);
-                var currentCapacity = user.CurrentCapacity -= file.FileSize;
-                await _userRepopsitory.UpdateUserCapacity(userId, currentCapacity, cancellationToken);
+
+                user.CurrentCapacity -= file.FileSize;
+                await _userRepopsitory.UpdateUser(user, user => user.CurrentCapacity);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
                 return Ok("delete success");
             }
             catch (Exception ex)
             {
-                _logger.LogInformation(ex.Message);
+                _logger.LogError(ex.Message);
                 return BadRequest("delete fail");
             }
         }
 
         [HttpGet]
         [Route("download/{fileId}")]
-        public async Task<IActionResult> Get([FromServices] IFileService fileService, string fileId, CancellationToken cancellationToken)
+        public async Task<IActionResult> Get([FromServices] IFileService fileService, Guid fileId, CancellationToken cancellationToken)
         {
             try
             {
-                var file = await _userFileRepopsitory.GetOneFile(Guid.Parse(fileId), cancellationToken);
+                var file = await _userFileRepopsitory.GetOneFile(fileId, cancellationToken);
                 //var bytes = await fileService.GetFileAsByteArray(file.FilePath);
                 //return File(bytes, file.FileType, file.FileName);
                 Stream fileStream = System.IO.File.Open(file.FilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
                 return File(fileStream, "application/octet-stream", file.FileName);
-                fileStream.Close();
-                fileStream.Dispose();
             }
             catch (Exception ex)
             {
-                _logger.LogInformation(ex.Message);
+                _logger.LogError(ex.Message);
                 return BadRequest("下载失败");
             }
         }

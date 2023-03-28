@@ -14,13 +14,12 @@ namespace FileRepoSys.Api.Repository
             _dbContext = dbContext;
         }
 
-        public async Task<int> AddOneFile(UserFile file, CancellationToken cancellationToken=default)
+        public async Task AddOneFile(UserFile file, CancellationToken cancellationToken=default)
         {
             await _dbContext.AddAsync(file, cancellationToken);
-            return await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<int> DeleteOneFile(Guid id, CancellationToken cancellationToken = default)
+        public Task DeleteOneFile(Guid id)
         {
             UserFile file = new()
             {
@@ -28,10 +27,15 @@ namespace FileRepoSys.Api.Repository
                 IsDeleted = true,
             };
             _dbContext.Entry(file).Property(file=>file.IsDeleted).IsModified=true;
-            return await _dbContext.SaveChangesAsync(cancellationToken);
+            return Task.CompletedTask;
         }
 
         public Task<UserFile> GetOneFile(Guid id, CancellationToken cancellationToken = default)
+        {
+            return _dbContext.UserFiles.SingleAsync(file => file.Id == id, cancellationToken);
+        }
+
+        public Task<UserFile?> FindOneFile(Guid id, CancellationToken cancellationToken = default)
         {
             return _dbContext.UserFiles.SingleOrDefaultAsync(file=>file.Id == id,cancellationToken);
         }

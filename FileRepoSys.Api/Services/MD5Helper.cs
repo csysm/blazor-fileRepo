@@ -1,4 +1,4 @@
-﻿using FileRepoSys.Api.Service.Contract;
+﻿using FileRepoSys.Api.Services.Contract;
 using System.Security.Cryptography;
 using System.Text;
 

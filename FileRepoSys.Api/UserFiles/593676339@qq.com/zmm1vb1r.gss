@@ -1,0 +1,198 @@
+## 过滤器
+
+---
+
+ASP.Net Core中的Filter有5种类型：
+
+1. Authorization filter
+2. Resource filter
+3. Action filter
+4. Exception filter
+5. Result filter
+
+所有的Filter一般都有同步与异步两个版本，比如IActionFilter，IAsyncActionFilter，推荐都使用异步版本。本文只介绍Exception Filter和Action Filter。
+
+### Exception Filter
+
+用于捕获某个Action执行时发生的异常，捕获后可以执行Exception Filter中的代码
+
+1. 自定义一个类继承`IAsyncExceptionFilter`
+
+   ```c#
+   public class MyExceptionFilter:IAsyncExceptionFilter
+   {
+       public readonly IWebHostEnvironment _hostEnv;
+       public MyExceptionFilter(IWebHostEnvironment hostEnv)
+       {
+           _hostEnv=hostEnv;//注入当前运行环境
+       }
+       
+       public Task OnExceptionAsync(ExceptionContext context)
+       {
+           //通过context获取异常的信息
+           //context.Exception;获取异常对象
+           //context.ExceptionHandled=true;当设置ExceptionHandled=true后，应该在其之后执行的ExceptionFilter不会再执行
+           //context.Result的值会被输出给客户端
+           
+           string msg;
+           if(_hostEnv.IsDevelopment()){
+               msg=context.Exception.ToString();
+           }else{
+               msg="服务器发生异常"
+           }
+           ObjectResult objResult=new ObjectResult(new {code=500,message=msg});
+           context.Result=objResult;
+           context.ExceptionHandled=true;
+       }
+   }
+   ```
+
+2. 在Program.cs中配置
+
+   后添加的Filter会先执行，若在某个ExceptionFilter中设置了`ExceptionHandled=true`则在它之前添加的ExceptionFilter不会执行
+
+   ```c#
+   builder.Services.Configure<MvcOptions>(option=>{
+       option.Filters.Add<MyExceptionFilter>();
+       option.Filters.Add<LogExceptionFilter>();
+   })
+   ```
+
+### Action Filter
+
+可以在每个Action执行前和执行后自动执行的Filter，与Exception Filter相似，多个Action Filter也可以链式执行
+
+Action Filter由前部分与后部分组成，在Action执行前执行的是前部分，在Action执行后执行的是后部分。若一个Action配置有多个Action Filter，则按以下顺序执行
+
+执行顺序由上到下：
+
+> 开始
+>
+> Action Filter1前部分
+>
+> Action Filter2前部分
+>
+> ... 
+>
+> Action方法本体
+>
+> ... 
+>
+> Action Filter2后部分
+>
+> Action Filter1后部分
+>
+> 结束
+
+1. 自定义一个类继承`IAsyncActionFilter`
+
+   ```c#
+   public class MyActionFilter:IAsyncActionFilter
+   {   
+       public Task OnActionExecutingAsync(ActionExecutingContext context,ActionExecutingDelegate next)
+       {
+           //ActionExecutingContext类型参数context，代表当前要执行的Action方法
+           //ActionExecutingDelegate类型委托next,指向下一个要执行的ActionFilter,若不存在下一个ActionFilter则指向实际的Action方法
+           
+           Console.WriteLine("MyActionFilter1前代码");
+           
+           ActionExecutedContext result=await next();//这行之后的代码是后部分
+           
+           if(result.Exception!=null)
+           {
+               Console.WriteLine("MyActionFilter1发生异常了")
+           }
+           else
+           {
+               Console.WriteLine("MyActionFilter1执行成功")
+           }
+       }
+   }
+   ```
+
+   需要注意的是`next`委托指向下一个要执行的Filter或Action，但如果在当前执行的Filter中不进行`await next();`调用，则不会进入下一个Filter或Action。可以利用这一点来限制对Action的访问。
+
+   也可以在`OnActionExecutingAsync`方法中设置`context.Result = new BadRequestResult();`来终止ActionFilter继续执行并且返回一个ActionResult。
+
+2. 在Program.cs中配置，与ExceptionFilter一样
+
+   ```c#
+   builder.Services.Configure<MvcOptions>(option=>{
+       option.Filters.Add<MyActionFilter1>();
+       option.Filters.Add<MyActionFilter2>();
+   })
+   ```
+
+   与ExceptionFilter不一样的是，后添加的ActionFilter会后执行
+
+### 结合EFCore的TransactionScope编写让Action自动启用全局事务的ActionFilter
+
+```c#
+public class TransactionActionFilter:IAsyncActionFilter
+{   
+    public Task OnActionExecutingAsync(ActionExecutingContext context,ActionExecutingDelegate next)
+    {
+        //ActionExecutingContext类型参数context，代表当前要执行的Action方法,可以通过其ActionDescriptor属性获取更丰富的有关Action的信息
+        //ActionExecutingDelegate类型参数next,指向下一个要执行的ActionFilter,若不存在下一个ActionFilter则指向实际的Action方法
+        
+        //ActionDescriptor类型可以转换为ControllerActionDescriptor类型，且从中可以得到当前要执行的Controller、Action的描述，类型等信息
+        ControllerActionDescriptor ctrlActionDesc=context.ActionDescriptor as ControllerActionDescriptor;
+        bool isTX=false;//是否进行事务控制
+        
+        if(ctrlActionDesc!=null)
+        {
+            //使用ctrlActionDesc.MethodInfo得到当前要执行的Action方法的描述信息
+            bool hasNotTransactionAttribute=ctrlActionDesc.MethodInfo.GetCustomAttributes(typeof(NotTransactionAttribute),false).Any();//检测Action方法是否已经标注过启用事务
+            isTX=!hasNotTransactionAttribute;//若没有标注过启用事务则启用TransactionScope
+        }
+        
+        if(isTX)//若没有标注过启用事务则启用TransactionScope
+        {
+            using(TransactionScope tx=new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            {
+                var result=await next();//获得实际Action的执行结果
+                if(result.Exception==null)//若Action执行结果没有异常
+                {
+                    tx.Complete();//提交事务
+                }
+            }
+        }
+        else//若标注过启用事务则不启用
+        {
+            await next();
+        }
+    }
+}
+```
+
+### 限流过滤器
+
+例子：实现一个限制控制器中的所有方法在1s中之内只能访问一次的ActionFilter
+
+```c#
+public class RateLimitActionFilter:IAsyncActionFilter
+{
+    private readonly IMemoryCache _cache;//注入内存缓存，也可替换为分布式缓存以实现为多个服务器的相同服务进行流量限制
+    public RateLimitActionFilter(IMemoryCache cache)
+    {
+        _cache=cache;
+    }
+    public Task OnActionExecutionFilter(ActionExecutingContext context,ActionExecutingDelegate next)
+    {
+        string ip=context.HttpContext.Connection.RemoteIpAddress.ToStrong();//获取用户请求的ip地址
+        string cacheKey=$"lastVisitTime_{ip}";
+        long? lastVisitTime=_cache.Get<long?>(cacheKey);
+        if(lastVisitTime==null||Environment.TickCount64-lastVisitTime>1000)//若上次访问时间不存在或距现在已经超过1s
+        {
+            _cache.Set(cacheKey,Environment.TickCount64,TimeSpan.FromSeconds(10));
+            await next();
+        }
+        else
+        {
+            ObjectResult result=new ObjectResult {StatusCode=429,Message="访问太频繁"};
+            context.Result=result;
+        }
+    }
+}
+```
+

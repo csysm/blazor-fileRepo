@@ -5,6 +5,7 @@ using FileRepoSys.Web.Util;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Claims;
 
 namespace FileRepoSys.Web.Service
 {
@@ -34,6 +35,7 @@ namespace FileRepoSys.Web.Service
                 var authToken = await respons.Content.ReadAsStringAsync();
                 await _localStorage.SetItemAsync("authToken", authToken);
 
+                
                 ((ApiAuthenticationStateProvider)_authenticationStateProvider).MarkUserAsAuthenticated(loginViewModel.Email);
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
                 return (true, "登录成功");

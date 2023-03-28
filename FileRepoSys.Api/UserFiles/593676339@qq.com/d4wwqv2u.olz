@@ -1,0 +1,20 @@
+.Net Standard是一个统一.Net Framework和.Net Core的标准，规定了这两个框架具有哪些类和方法，不提供实现，具体实现由框架决定
+
+依赖注入
+
+```c#
+using Microsoft.Extensions.DependencyInjection;
+
+ServiceCollection sc=new ServiceCollection();
+sc.AddScoped<aaa>();
+ServiceProvider sp=sc.BuildServiceProvider();
+var service= sp.GetService<aaa>();
+service.print();
+
+public class aaa{
+    public void print(){
+        System.Console.WriteLine("i am aaa");
+    }
+}
+```
+

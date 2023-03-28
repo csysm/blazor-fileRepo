@@ -1,10 +1,12 @@
 ﻿using MimeKit;
 using MailKit.Net.Smtp;
-namespace FileRepoSys.Api.Util
+using FileRepoSys.Api.Services.Contract;
+
+namespace FileRepoSys.Api.Service
 {
-    public class Mailhelper
+    public class QQMailService: ICustomMailService
     {
-        public static void SendMail(string userMail, string userName, string activeLink)//收件方邮箱，收件方名称，激活连接
+        public void SendActiveMail(string userMail, string userName, string activeLink)//收件方邮箱，收件方名称，激活连接
         {
             //编辑邮件信息
             var message = new MimeMessage();

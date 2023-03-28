@@ -18,24 +18,20 @@ builder.Services.AddDbContext<FileRepoSysDbContext>(options =>
 });
 
 //注册自定义服务注入
-builder.Services.AddExtendServices();
-
+builder.Services.AddCustomServices();
 
 //自定义AutoMapper
-builder.Services.AddAutoMapper(typeof(CustomeAutoMapperProfile));
+//builder.Services.AddAutoMapper(typeof(CustomeAutoMapperProfile));
 
 //redis
-//builder.Services.AddStackExchangeRedisCache(options =>
-//{
-//    options.Configuration = "localhost:6379";
-//    options.InstanceName = "filerepo_";
-//});
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetSection("Redis").GetValue<string>("Port");
+    options.InstanceName = builder.Configuration.GetSection("Redis").GetValue<string>("InstanceName");
+});
 
-//memorycache
-builder.Services.AddMemoryCache();
-
-builder.Services.AddCors(config => config.AddPolicy("localapi", p => p.WithOrigins("http://43.140.215.157/").AllowAnyMethod().AllowAnyHeader()));
-//builder.Services.AddCors(config => config.AddPolicy("localtest", p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+//builder.Services.AddCors(config => config.AddPolicy("localapi", p => p.WithOrigins("http://43.140.215.157/").AllowAnyMethod().AllowAnyHeader()));
+builder.Services.AddCors(config => config.AddPolicy("localtest", p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -103,7 +99,7 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 });
 
 app.Urls.Add("http://localhost:5103");
-app.UseCors("localapi");
+app.UseCors("localtest");
 
 app.UseAuthentication();
 app.UseAuthorization();

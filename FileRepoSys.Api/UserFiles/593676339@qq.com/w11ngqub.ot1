@@ -1,0 +1,19 @@
+自制数据集
+
+数据增强
+
+注意力机制
+
+更换主干网络
+
+更换损失函数(SIOU)
+
+
+
+实验：
+exp2: yolo5s
+exp3: yolo5s+SE_attention
+exp4: yolo5s+SIOU
+exp5: yolo5s+C3SE_attention+SIOU
+exp8: yolo5s+C3ECA_attention+SIOU
+exp7: yolo5s+C3CoordAtt_attention+SIOU

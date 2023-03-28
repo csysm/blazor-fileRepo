@@ -1,4 +1,4 @@
-﻿namespace FileRepoSys.Api.Service.Contract
+﻿namespace FileRepoSys.Api.Services.Contract
 {
     public interface IFileService
     {

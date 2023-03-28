@@ -5,11 +5,13 @@ namespace FileRepoSys.Api.Repository.Contract
 {
     public interface IUserFileRepository
     {
-        Task<int> AddOneFile(UserFile file, CancellationToken cancellationToken = default);
+        Task AddOneFile(UserFile file, CancellationToken cancellationToken = default);
 
-        Task<int> DeleteOneFile(Guid id, CancellationToken cancellationToken = default);
+        Task DeleteOneFile(Guid id);
 
         Task<UserFile> GetOneFile(Guid id, CancellationToken cancellationToken = default);
+
+        Task<UserFile?> FindOneFile(Guid id, CancellationToken cancellationToken = default);
 
         Task<List<UserFile>> GetFiles(Expression<Func<UserFile, bool>> predicate, CancellationToken cancellationToken = default);
 

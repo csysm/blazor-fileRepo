@@ -7,7 +7,7 @@ namespace FileRepoSys.Api.Data
     {
         public FileRepoSysDbContext(DbContextOptions<FileRepoSysDbContext> options):base(options)
         {
-
+            
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
